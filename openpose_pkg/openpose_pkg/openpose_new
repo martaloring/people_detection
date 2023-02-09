@@ -125,7 +125,6 @@ class OpenposeClass(Node):
         return [new_window, new_center]
 
 
-
     def humans_to_msg(self, humans, frame, cloud):
         humanArray_msg = HumanArray2() ## return array
         ## data about the image
@@ -188,6 +187,7 @@ class OpenposeClass(Node):
                 
         return humanArray_msg
 
+
     def single_human_msg(self, human):
         human_msg = Human()
         part_scores = []
@@ -218,6 +218,7 @@ class OpenposeClass(Node):
 	            self._prev_user = new_user'''
         return human_msg
 
+
     def detect_humans(self):
 
         #publishers and subscribers
@@ -243,6 +244,7 @@ class OpenposeClass(Node):
         rclpy.shutdown("Exiting openpose node.\n")              # ANTES PONIA rospy.signal_shutdown("Exiting openpose node.\n")
         sys.exit(1)
 
+
     def callback_image(self, frame_ros):
     	
         try:
@@ -256,7 +258,6 @@ class OpenposeClass(Node):
             self._img_ready = False
         except CvBridgeError as e:
             pass
-        
         
         
     def publish_human_pose(self):
@@ -277,14 +278,6 @@ class OpenposeClass(Node):
         ## publish human array
         self._pub_human.publish(humanArray_msg)
 
-        ##store bag
-        ##self._bag.write('humans-openpose', humanArray_msg)
-
-        # if len(humanArray_msg.humans) > 0 and not self._compute_depth and self._move_robot:           # el if comentado por mi
-        #     try:
-        #         resp = self._srv_change_cam_handle('rgbd') ##change to rgb-d
-        #     except rospy.ServiceException as e:
-        #         pass
 
 def main(args=None):
     rclpy.init(args=args)

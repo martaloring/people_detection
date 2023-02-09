@@ -45,12 +45,8 @@ class camera_usb(Node):
 
         ## services names
         self.declare_parameter('~ROSServices/change_frec_srv', '/change_frec')
-        #self.declare_parameter('~ROSServices/off_frec_srv', '/off_frec')                                                           -- estaba ya comentado
-        #self.declare_parameter('~ROSServices/change_cam', '/off_frec2')
         self.declare_parameter('~ROSServices/start_detection_srv', '/off_frec3')
         self._srv_change_name = self.get_parameter('~ROSServices/change_frec_srv').get_parameter_value().string_value
-        ##self._srv_off_name = self.get_parameter('~ROSServices/off_frec_srv').get_parameter_value().string_value                   -- estaba ya comentado
-        #self._srv_change_cam = self.get_parameter('~ROSServices/change_cam').get_parameter_value().string_value
         self._srv_start_name = self.get_parameter('~ROSServices/start_detection_srv').get_parameter_value().string_value
 
 
@@ -74,8 +70,7 @@ class camera_usb(Node):
             self.get_logger().info('Low frecuency: %d', self._frec_low)
             self.get_logger().info('High frecuency: %d', self._frec_high)
             self.get_logger().info('Factor for the image: %d ', self._factor_dim)
-            self.get_logger().info('RGB Topic name: %s', self._topic_rgb_image )
-            ##self.get_logger().info('Service name to turn off the detection: %s', self._srv_change_name)                           -- estaba ya comentado
+            self.get_logger().info('RGB Topic name: %s', self._topic_rgb_image)
             self.get_logger().info('Topic name for the image: %s', self._topic_image)
 
         self._zero_frec_off = False ## indicates if the off frec is zero, aka, do not publish
@@ -124,7 +119,6 @@ class camera_usb(Node):
         
         ## services
         self._change_det_srv = self.create_service(ChangeFrecDetection, self._srv_change_name, self.change_frec_srv)
-        #self._change_cam_srv = self.create_service(ChangeCam, self._srv_change_cam, self.change_cam_srv)
         self._start_det_srv = self.create_service(StartDetectionHuman, self._srv_start_name, self.start_det_srv_callback)
 
 
@@ -170,19 +164,6 @@ class camera_usb(Node):
         
         return res                                                                                  # ANTES ERA: return StartDetectionHumanResponse()
 
-    # def change_cam_srv(self, req, res):
-    #     if self._detection_active:
-    #         ## changing the cam just makes sense
-    #         ## when we are looking for sth
-    #         if req.activate_cam == 'fish':
-    #             self._mode_cam = False ##change to fish-eye cam
-                
-    #         elif req.activate_cam == 'rgbd':
-    #             self._mode_cam = True ## change to rgb-d cam
-    #     else:
-    #         self._mode_cam = False
-    #     return res                                                                                   # ANTES ERA: return ChangeCamResponse()
-
     def change_frec_srv(self,req, res):
         if req.change_frec_to == 'off':
             ## we start
@@ -192,7 +173,6 @@ class camera_usb(Node):
             self._detection_active = False
             self._mode_cam = True ##change to fish-eye cam     -- lo pongpo a true
             
-
         elif req.change_frec_to == 'low':
             
             self._mode_off = False
@@ -269,7 +249,7 @@ class camera_usb(Node):
         self._detection_active = False
         while (rclpy.ok()):          # ANTES PONIA while(not rospy.is_shutdown()()
             ## if we dont need to compute the depth
-            if not self._detection_active and self._img_ready: ## we are using the fish    - no tiene por que
+            if not self._detection_active and self._img_ready: ## we are using the fish - no tiene por que
                 
                 if self._debug:
                     self.get_logger().info('Sending image without detection')

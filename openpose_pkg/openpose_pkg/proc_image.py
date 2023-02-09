@@ -6,9 +6,9 @@ import os
 import numpy as np
 import cv2
 import math
-import rospy
+import rclpy
 from enum import Enum
-from openpose_pkg.msg import *
+from openpose_interfaces.msg import *
 
 from sensor_msgs.msg import Image
 from cocoparts import *
@@ -42,6 +42,7 @@ class HumanImage():
         if self._certainty < self.threshold or self._human is None:
             self._poor_det = True
 
+###########################################
 
     def fill_pairs_components(self):
         for part in self._human.parts:
@@ -65,10 +66,8 @@ class HumanImage():
 
             self.user_msg.body_part_3d.append(bodypart3d)
 
-
-        
-
 ###########################################
+
     def window_human(self):
         self.fill_pairs_components() ## this function fills parts_coord
         self.close_human() ## this fucntion finds the rect where the human is
@@ -76,6 +75,7 @@ class HumanImage():
         return [self._min_rect, self._center]
 
 ###########################################
+
     def fill_links(self):
         ## this function NEEDS parts_coords FILLED
         for pair_idx, pair in enumerate(CocoPairs): 
@@ -91,8 +91,8 @@ class HumanImage():
             direction = np.arctan2(y_1 - y_0, x_1 - x_0)
             self.pairs_components[pair_idx] = (magnitude, direction)
 
-
 ###########################################
+
     def get_minimum_rect(self):
          ## this function NEEDS parts_coords FILLED
             ## WIDTH X = 0
@@ -106,9 +106,8 @@ class HumanImage():
 
         return (width_min, width_max, height_min, height_max)
     
-
 ###########################################
-    
+
     def close_human(self):
         ## images coordinates
         w_min, w_max, h_min, h_max = self.get_minimum_rect()
@@ -116,8 +115,6 @@ class HumanImage():
         center_h = int((h_min + h_max) / 2)
         self._center = [center_w, center_h]
         self._min_rect = [w_min, w_max - w_min, h_min, h_max - h_min]
-
-
 
 ############################################
 
@@ -143,13 +140,14 @@ class HumanImage():
         self.user_msg.w = self._min_rect[1]
         self.user_msg.h = self._min_rect[3]
 
-        self.user_msg.pose_3D.position.x = self._center[0]
-        self.user_msg.pose_3D.position.y = self._center[1]
-        self.user_msg.pose_3D.position.z = 0.0
+        self.user_msg.pose_3d.position.x = self._center[0]
+        self.user_msg.pose_3d.position.y = self._center[1]
+        self.user_msg.pose_3d.position.z = 0.0
             
                     
         return self.user_msg
 
+############################################
 
     def draw(self, image):
         image_drawn = cv2.resize(image, (self.image_w, self.image_h), interpolation=cv2.INTER_CUBIC)

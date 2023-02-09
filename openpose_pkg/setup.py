@@ -20,7 +20,12 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'camera_basic = openpose_pkg.camera_basic:main'
+            'camera_basic = openpose_pkg.camera_basic:main',
+            'proc_depth_node = openpose_pkg.proc_depth_node:main',
+            'openpose_new = openpose_pkg.openpose_new:main',
+            'User2Person2 = openpose_pkg.User2Person2:main',
+            'proc_human_node = openpose_pkg.proc_human_node:main',
+            'window2 = openpose_pkg.window2:main'
         ],
     },
 )

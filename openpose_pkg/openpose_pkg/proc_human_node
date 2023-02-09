@@ -29,9 +29,9 @@ class HumanProcessorClass(Node):
         self._debug = self.get_parameter('~DebugInfo/debug_info').get_parameter_value().bool_value
 
         ## topics names
-        self.declare_parameter('~ROSTopics/humans_topic', '/humans')
-        self.declare_parameter('~ROSTopics/video_humans_drawn_topic', '/frame_humans')
-        self.declare_parameter('~ROSTopics/humans_3d_topic', '/frame_humans')
+        self.declare_parameter('~ROSTopics/humans_topic', '/humans') ##sub
+        self.declare_parameter('~ROSTopics/video_humans_drawn_topic', '/frame_humans') ##pub
+        self.declare_parameter('~ROSTopics/humans_3d_topic', '/frame_humans') ##pub
 
         self._topic_humans_name = self.get_parameter('~ROSTopics/humans_topic').get_parameter_value().string_value
         self._topic_human_frame_drawn_name = self.get_parameter('~ROSTopics/video_humans_drawn_topic').get_parameter_value().string_value
@@ -105,7 +105,6 @@ class HumanProcessorClass(Node):
             if(len(depth_humans2.users) > 0):
 
                 self._pub_user.publish(depth_humans2)
-                ## self._bag.write('huamns-proc', depth_humans2)
 
 
         if (image is None):  

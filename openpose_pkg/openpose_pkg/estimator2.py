@@ -258,10 +258,9 @@ class TfPoseEstimator:
         ################# ALBERTO
         config = tf.ConfigProto(log_device_placement=False) ## , allow_soft_placement=True)
         config.gpu_options.allow_growth = True
-	config.gpu_options.per_process_gpu_memory_fraction=0.25       
+        config.gpu_options.per_process_gpu_memory_fraction=0.25       
 
-
-	self.persistent_sess = tf.Session(graph=self.graph, config=config)
+        self.persistent_sess = tf.Session(graph=self.graph, config=config)
         #######################
         #self.persistent_sess = tf.Session(graph=self.graph)
 

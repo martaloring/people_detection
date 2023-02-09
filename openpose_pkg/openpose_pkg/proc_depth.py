@@ -6,31 +6,31 @@ import os
 import numpy as np
 import cv2
 import math
-import rospy
+import rclpy
 import time
 from enum import Enum
-from openpose_pkg.msg import *
-from openpose_pkg.srv import *
-from tf.transformations import *
+from openpose_interfaces.msg import *
+from openpose_interfaces.srv import *
+from tf_transformations import *
 from math import pi
 from sensor_msgs.msg import Image, PointCloud2
-import sensor_msgs.point_cloud2 as pc2
-from tf.transformations import quaternion_from_euler
-from pointcloud2msg import PointCloudClass
+#import sensor_msgs.point_cloud2 as pc2
+from tf_transformations import quaternion_from_euler
+#from pointcloud2msg import PointCloudClass
 from visualization_msgs.msg import MarkerArray, Marker
 from std_msgs.msg import ColorRGBA
 from geometry_msgs.msg import Point, Pose
 from cocoparts import *
+from rclpy.duration import Duration
 
 
 class HumanDepth():
-
     def __init__(self, userrgbd,  image_w, image_h, factor, data_cloud, detect_body = False, header_img = None):
         self._user = userrgbd
         self._pose_3d = []
         self._body_3d = []
         ## keep these var for the new message
-        self._pose_3d = userrgbd.pose_3D
+        self._pose_3d = userrgbd.pose_3d
 
         self._body_part_3d = userrgbd.body_part_3d
 
@@ -58,8 +58,8 @@ class HumanDepth():
         ## cloud data
         self._data_cloud = data_cloud
         
-
 ########################################### 
+
     def get_mean_depth(self, w_min, w_max, h_min, h_max): ## DONT USE
 
         mean_depth = [0.0, 0.0, 0.0]
@@ -81,7 +81,6 @@ class HumanDepth():
             correct = False
         return correct, mean_depth
 
-
 ##############################################
 #######     UNDO THE FACTOR RESIZE      ######
 ##############################################
@@ -99,7 +98,6 @@ class HumanDepth():
             h_out = h
         return w_out, h_out
 
-    
 ##############################################
 #######          BODY 3D POSE           ######
 ##############################################
@@ -200,7 +198,7 @@ class HumanDepth():
             final_point.z = z_1
             
             marker_msg.ns = "body_user"
-            marker_msg.header.stamp = rospy.Time.now()
+            marker_msg.header.stamp = time.time()
             marker_msg.header.frame_id = self._header_img 
             marker_msg.type = marker_msg.LINE_STRIP
 
@@ -235,8 +233,6 @@ class HumanDepth():
             
             self._marker_msg_body.markers.append(marker_msg)
         
-
-
     def create_marker_sphere_body_msg(self, id,  point):
 
         point3d = point
@@ -250,7 +246,7 @@ class HumanDepth():
         pose.orientation.z = 0
         pose.orientation.w = 1
         marker_msg.ns = "body_user"
-        marker_msg.header.stamp = rospy.Time.now()
+        marker_msg.header.stamp = time.time()
         marker_msg.header.frame_id = self._header_img 
         marker_msg.type = marker_msg.SPHERE
 
@@ -283,12 +279,11 @@ class HumanDepth():
 
         return marker_msg
 
-
     def create_marker_sphere_msg(self, pos_3d):
 
         marker_msg = Marker()
         marker_msg.ns = "appro_user"
-        marker_msg.header.stamp = rospy.Time.now()
+        marker_msg.header.stamp = time.time()
         marker_msg.header.frame_id = self._header_img 
         marker_msg.type = marker_msg.SPHERE
         marker_msg.id = 0
@@ -314,7 +309,7 @@ class HumanDepth():
         marker_msg.id = 1
         marker_msg.action = marker_msg.ADD
         marker_msg.pose = pos_3d
-        marker_msg.header.stamp = rospy.Time.now()
+        marker_msg.header.stamp = time.time()
         marker_msg.header.frame_id = self._header_img 
 
 
@@ -326,10 +321,9 @@ class HumanDepth():
         marker_msg.color.g = 1.0
         marker_msg.color.b = 0.0
         marker_msg.color.a = 1.0
-        marker_msg.lifetime = rospy.Duration()
+        marker_msg.lifetime = Duration()
 
         return marker_msg
-
 
     def get_human_height(self): ## weird integers!!!
         valid = False
@@ -378,11 +372,11 @@ class HumanDepth():
                 break
 
         if exist_feet and exist_top and len(depth_top) > 0 and len(depth_feet) > 0:
-            print 'head', depth_top
-            print 'feet', depth_feet
+            #print 'head', depth_top
+            #print 'feet', depth_feet
             human_height = depth_top[1] - depth_feet[1]
             valid = True
-            print human_height
+            #print human_height
 
 
         return human_height, valid
@@ -463,7 +457,6 @@ class HumanDepth():
                 ##print H
         return H, valid
 
-  
 ############################################      
 #######       HUMAN MSG         ############    
 ############################################
@@ -490,24 +483,23 @@ class HumanDepth():
             ##if valid:
               ##  self._new_user_rgbd_msg.human_height = height_human
 
-            self._new_user_rgbd_msg.pose_3D.position.x = float(mean_depth[0])
-            self._new_user_rgbd_msg.pose_3D.position.y = float(mean_depth[1])
-            self._new_user_rgbd_msg.pose_3D.position.z = float(mean_depth[2])
+            self._new_user_rgbd_msg.pose_3d.position.x = float(mean_depth[0])
+            self._new_user_rgbd_msg.pose_3d.position.y = float(mean_depth[1])
+            self._new_user_rgbd_msg.pose_3d.position.z = float(mean_depth[2])
             ## we still need to update the orientaation
                             
             QH = quaternion_from_euler(*H)
             ## print QH
-            self._new_user_rgbd_msg.pose_3D.orientation.x = QH[0]
-            self._new_user_rgbd_msg.pose_3D.orientation.y = QH[1]
-            self._new_user_rgbd_msg.pose_3D.orientation.z = QH[2]
-            self._new_user_rgbd_msg.pose_3D.orientation.w = QH[3]
+            self._new_user_rgbd_msg.pose_3d.orientation.x = QH[0]
+            self._new_user_rgbd_msg.pose_3d.orientation.y = QH[1]
+            self._new_user_rgbd_msg.pose_3d.orientation.z = QH[2]
+            self._new_user_rgbd_msg.pose_3d.orientation.w = QH[3]
 
-            self._marker_msg = self.create_marker_sphere_msg(self._new_user_rgbd_msg.pose_3D)
-            self._marker_arrow_msg = self.create_marker_arrow_msg(self._new_user_rgbd_msg.pose_3D)
+            self._marker_msg = self.create_marker_sphere_msg(self._new_user_rgbd_msg.pose_3d)
+            self._marker_arrow_msg = self.create_marker_arrow_msg(self._new_user_rgbd_msg.pose_3d)
 
 
         return self._new_user_rgbd_msg, self._marker_msg, self._marker_arrow_msg, self._marker_msg_body, is_human_3d
-
 
 ############################################      
 #######       HUMAN SET         ############    
@@ -528,7 +520,7 @@ class HumanDepthSet():
         self.image_w = msg_humans.image_w
         self.image_h = msg_humans.image_h
         self.compute_depth = msg_humans.compute_depth
-        self._point_cloud = PointCloudClass(msg_humans.cloud, field_names = ["x", "y", "z"])
+        self._point_cloud = PointCloud2(msg_humans.cloud, field_names = ["x", "y", "z"])
 
         ## msg to return
         self.userarray_msg = User3DArray()
@@ -541,7 +533,6 @@ class HumanDepthSet():
 ############################################      
 #######       HUMAN SET MSG     ############    
 ############################################
-
     def create_msg_depth_cloud(self):
         self.cloud_correct = True
         if self._point_cloud._width > 0 and self._point_cloud._height > 0:
@@ -562,7 +553,7 @@ class HumanDepthSet():
                  
                 ###print user_msg 
                 if is_human_3d:
-                    self._depth_array.append(user_msg.pose_3D.position.z)
+                    self._depth_array.append(user_msg.pose_3d.position.z)
                     ##users
                     self.userarray_msg.users.append(user_msg)
                     ## huamn center markers

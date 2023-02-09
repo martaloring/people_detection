@@ -38,9 +38,9 @@ class HumanDepthProcessorClass(Node):
         ## topics names
         self.declare_parameter('~ROSTopics/humans_3d_topic', '/frame_humans') ##sub
         self.declare_parameter('~ROSTopics/users_3d_topic', '/empty_topic') ##pub
-        self.declare_parameter('~ROSTopics/marker_users_topic', '/markers_users')
+        self.declare_parameter('~ROSTopics/marker_users_topic', '/markers_users') # array de markers en el espacio, cada uno marca una pose
         self.declare_parameter('~ROSServices/no_human_srv', '/human')
-        self.declare_parameter('~ROSTopics/markers_3d_body_parts_topic', '/frame_humans')
+        self.declare_parameter('~ROSTopics/markers_3d_body_parts_topic', '/frame_humans') # array de markers en el espacio, indicando las partes del humano en el espacio (lineas y esferas)
 
         self._topic_human_3d_name = self.get_parameter('~ROSTopics/humans_3d_topic').get_parameter_value().string_value ##sub
         self._topic_users_3d = self.get_parameter('~ROSTopics/users_3d_topic').get_parameter_value().string_value ##pub
@@ -49,12 +49,10 @@ class HumanDepthProcessorClass(Node):
         self._topic_body_3d_markers = self.get_parameter('~ROSTopics/markers_3d_body_parts_topic').get_parameter_value().string_value
 
 
-
         self._header_users = None
         self._users = None
         self._width_img = 100.0
         self._height_img = 100.0
-        ### self._bag = rosbag.Bag('3d_users_depth.bag', 'w')
 
         #####################
         ### DEBUG INFO    ###
@@ -64,26 +62,25 @@ class HumanDepthProcessorClass(Node):
             self.get_logger().info('Topic name for the openpose-3d users: %s', self._topic_users_3d)
             self.get_logger().info('Topic name for the users (subscriber): %s', self._topic_human_3d_name)
 
+
     def process_humans(self):
         self._bridge = CvBridge()
 
-        self._sub_humans = self.create_subscription(UserRGBDArray, self._topic_human_3d_name, self.callback_users) ## users from proc. image node
+        self._sub_humans = self.create_subscription(UserRGBDArray, self._topic_human_3d_name, self.callback_users) ## users from proc. image node. # array de UserRGBD (para cada usuario: nombre, coord. cara en img, pose, body parts...)
         
-        self._pub_user = self.create_publisher(User3DArray, self._topic_users_3d, queue_size = 100) ## user array in 3D
+        self._pub_user = self.create_publisher(User3DArray, self._topic_users_3d, queue_size = 100) ## array de User3D (para cada usuario: nombre, pose, body parts, altura...)
         self._pub_marker = self.create_publisher(MarkerArray, self._topic_marker, queue_size = 10) 
-        ### print 'topic', self._topic_marker
-        #self._srv_no_human = rospy.ServiceProxy(self._no_human_srv, NoHuman)
         self._pub_markers_body = self.create_publisher(MarkerArray, self._topic_body_3d_markers, queue_size = 10) ##img with drawn human
 
         r = self.create_rate(500) 
-        self._k = 0
+        #self._k = 0
         while (rclpy.ok()):          # ANTES PONIA while(not rospy.is_shutdown()()
             r.sleep()
         
-       ## self._bag.close()
         rclpy._shutdown("Exiting openpose publisher node.\n")
         sys.exit(1)
     
+
     def callback_users(self, user_array):
 
         if user_array.compute_depth:
@@ -99,22 +96,6 @@ class HumanDepthProcessorClass(Node):
                         self._pub_marker.publish(userarrarmarker_msg)
                         if self._create_body_3d:
                             self._pub_markers_body.publish(markers_body)
-                        
-                        ##self._bag.write('3d-users', userarray_msg)
-
-                        ### print 'publishing humans'
-
-                    else:
-                        self._k += 1
-                        ##move robot until find humans
-                        ### print 'human no valid'
-                        if self._k > 7:
-                            self._k = 0
-                            # try:
-                            #     print('calling srv from depth')
-                            #     #resp = self._srv_no_human([1.0, 0.0])                # lo comento todo porque lo unico que hacia era el print¿?, la llamada al servicio estaba comentada
-                            # except rospy.ServiceException as e:                       # y no se como poner el ServiceException
-                            #     pass
                         
 def main(args=None):
     rclpy.init(args=args)
