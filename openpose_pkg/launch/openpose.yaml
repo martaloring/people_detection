@@ -2,7 +2,7 @@ DisplayImages:
   show_frame : True
 
 DebugInfo:
-  debug_info : False
+  debug_info : True
 
 FrecInference:
   high_frec : 10
@@ -36,8 +36,6 @@ DualCams:
   iterations_down : 1
   rotate_images : True
   
-
-
 ROSTopics:
   image_topic : openpose/usb_cam/image_dim
   humans_topic: openpose/humans
@@ -47,8 +45,8 @@ ROSTopics:
 
   image_cam_topic : usb_cam/image_raw
 
-  rgb_cam_topic : camera_down/rgb/image_rect_color    
-  depth_cloud_topic : camera_down/depth/points      
+  rgb_cam_topic : camera_down/rgb/image_rect_color   # aqui publico desde la camara 
+  depth_cloud_topic : camera_down/depth/points       # aqui publico desde la camara 
 
   rgb_up_cam_topic : camera_up/rgb/image_rect_color    
   depth_cloud_up_topic : camera_up/depth/points      
