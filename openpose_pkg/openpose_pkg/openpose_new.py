@@ -61,7 +61,7 @@ class OpenposeClass(Node):
         self._threshold_human = self.get_parameter('~HumanDetected/threshold_human').get_parameter_value().double_value
 
         ## topics names
-        self.declare_parameter('~ROSTopics/image_topic', '/image_raw')
+        self.declare_parameter('~ROSTopics/image_topic', 'openpose/usb_cam/image_dim_CODE')
         self.declare_parameter('~ROSTopics/humans_topic', '/humans')
         #self.declare_parameter('~ROSTopics/frame_humans_topic', '/frame_humans')
         #self.declare_parameter('~ROSServices/change_cam', '/off_frec')
@@ -93,6 +93,7 @@ class OpenposeClass(Node):
             self.get_logger().info('Topic name for the humans: %s', self._topic_humans_name)
             ## rospy.loginfo('Topic name for the humans frame: %s', self._topic_human_frame_name)
 
+
     def vel_human(self, current_center, prev_center):
         vel = [0.0, 0.0]
         vel[0] = current_center[0] - prev_center[0]
@@ -100,6 +101,8 @@ class OpenposeClass(Node):
         return vel
 
         ## no use
+
+
     def update_window(self, w_frame, h_frame, initial_window, center, vel):
         new_window = initial_window
         new_center = center

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import rclpy
+import sys
+sys.path.append('/home/mapir/ros2_ws/src/openpose_pkg/openpose_pkg')
 from rclpy.node import Node
 from sensor_msgs.msg import Image, PointCloud2
 import cv2
@@ -10,10 +12,12 @@ import sys
 import numpy as np
 from openpose_interfaces.srv import *
 from openpose_interfaces.msg import *
-from calibrator import Calibrator
+# from calibrator import Calibrator
 import rospkg #for the ros pkg path
 import time
 from rclpy.exceptions import ROSInterruptException
+import threading
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
 #############################################################################
 ######### this node resizes the images AND publishes it with different Hz ###
@@ -28,7 +32,7 @@ class camera_usb(Node):
         ####    PARAMETERS         ####  por lo que he visto, para que las variables sea, bool, int... hay q hacer lo de value,
         ###############################  si no se pone lo de value, las variables quedan como parametros¿? structs¿?
         ## debug flag. show info
-        self.declare_parameter('~DebugInfo/debug_info', False)
+        self.declare_parameter('~DebugInfo/debug_info', True)
         self._debug = self.get_parameter('~DebugInfo/debug_info').get_parameter_value().bool_value
         
         ## dim of the image
@@ -36,27 +40,28 @@ class camera_usb(Node):
         self._factor_dim = self.get_parameter('~ImageParameters/factor').get_parameter_value().double_value
         
         ## frecuencies
-        self.declare_parameter('~FrecInference/off_frec', 1)
-        self.declare_parameter('~FrecInference/low_frec', 1)
-        self.declare_parameter('~FrecInference/high_frec', 1)
+        self.declare_parameter('~FrecInference/off_frec', 0)
+        self.declare_parameter('~FrecInference/low_frec', 5)
+        self.declare_parameter('~FrecInference/high_frec', 10)
         self._frec_off = self.get_parameter('~FrecInference/off_frec').get_parameter_value().integer_value
         self._frec_low = self.get_parameter('~FrecInference/low_frec').get_parameter_value().integer_value
         self._frec_high = self.get_parameter('~FrecInference/high_frec').get_parameter_value().integer_value
 
         ## services names
         self.declare_parameter('~ROSServices/change_frec_srv', '/change_frec')
-        self.declare_parameter('~ROSServices/start_detection_srv', '/off_frec3')
+        self.declare_parameter('~ROSServices/start_detection_srv', '/openpose/start_detection_humans_service')
         self._srv_change_name = self.get_parameter('~ROSServices/change_frec_srv').get_parameter_value().string_value
         self._srv_start_name = self.get_parameter('~ROSServices/start_detection_srv').get_parameter_value().string_value
 
 
         ## topics names
-        self.declare_parameter('~ROSTopics/image_topic', '/image_raw') ##pub
-        self.declare_parameter('~ROSTopics/image_cam_topic', '/image_raw3') ##sub
-        self.declare_parameter('~ROSTopics/depth_cloud_topic', '/frame_humans') ##sub -- depth cloud?
-        self.declare_parameter('~ROSTopics/rgb_cam_topic', '/image_raw0') ##sub -- aqui tenemos que publicar desde la camara
+        self.declare_parameter('~ROSTopics/image_topic', 'openpose/usb_cam/image_dim_CODE') ##pub -- esto es lo que le pasa al siguente nodo (openpose_new)
+        #self.declare_parameter('~ROSTopics/image_topic', None) ##pub -- esto es lo que le pasa al siguente nodo (openpose_new)
+        #self.declare_parameter('~ROSTopics/image_cam_topic', '/image_raw3') ##sub
+        self.declare_parameter('~ROSTopics/depth_cloud_topic', '/camera/depth/points') ##sub -- depth cloud?
+        self.declare_parameter('~ROSTopics/rgb_cam_topic', '/camera/color/image_raw') ##sub -- aqui tenemos que publicar desde la camara
         self._topic_image =  self.get_parameter('~ROSTopics/image_topic').get_parameter_value().string_value
-        self._topic_image_raw = self.get_parameter('~ROSTopics/image_cam_topic').get_parameter_value().string_value
+        #self._topic_image_raw = self.get_parameter('~ROSTopics/image_cam_topic').get_parameter_value().string_value
         self._topic_point_cloud_name = self.get_parameter('~ROSTopics/depth_cloud_topic').get_parameter_value().string_value
         self._topic_rgb_image = self.get_parameter('~ROSTopics/rgb_cam_topic').get_parameter_value().string_value
 
@@ -66,12 +71,12 @@ class camera_usb(Node):
    
         if self._debug:
             self.get_logger().info('Debug info activated')
-            self.get_logger().info('Off frecuency: %d', self._frec_off)
-            self.get_logger().info('Low frecuency: %d', self._frec_low)
-            self.get_logger().info('High frecuency: %d', self._frec_high)
-            self.get_logger().info('Factor for the image: %d ', self._factor_dim)
-            self.get_logger().info('RGB Topic name: %s', self._topic_rgb_image)
-            self.get_logger().info('Topic name for the image: %s', self._topic_image)
+            print('Off frecuency: %d' % (self._frec_off))
+            print('Low frecuency: %d' % (self._frec_low))
+            print('High frecuency: %d' % (self._frec_high))
+            print('Factor for the image: %d' % (self._factor_dim))
+            print('RGB Topic name: %s' % (self._topic_rgb_image))
+            print('Topic name for the image: %s' % (self._topic_image))
 
         self._zero_frec_off = False ## indicates if the off frec is zero, aka, do not publish
 
@@ -104,17 +109,17 @@ class camera_usb(Node):
         self._detection_active = False
         self._mode_cam = True ## false = fish cam, true = rgbd cam    he puesto la rgbd, estaba la fish
 
-        #####################
-        ###  CALIBRATION  ###
-        #####################
-        ## reading calibration info
-        rospack = rospkg.RosPack()
-        self._pkg_path = rospack.get_path('openpose_pkg') + '/calibration/'
-        self._K_path = self._pkg_path + 'K.npy'
-        self._dist_path = self._pkg_path + 'dist.npy'
-        self._K = np.load(self._K_path)
-        self._dist = np.load(self._dist_path)
-        self._calibrator = Calibrator(self._K, self._dist)
+        ####################
+        ##  CALIBRATION  ###
+        ####################
+        # reading calibration info
+        # rospack = rospkg.RosPack()
+        # self._pkg_path = rospack.get_path('openpose_pkg') + '/calibration/'
+        # self._K_path = self._pkg_path + 'K.npy'
+        # self._dist_path = self._pkg_path + 'dist.npy'
+        # self._K = np.load(self._K_path)
+        # self._dist = np.load(self._dist_path)
+        # self._calibrator = Calibrator(self._K, self._dist)
 
         
         ## services
@@ -122,47 +127,55 @@ class camera_usb(Node):
         self._start_det_srv = self.create_service(StartDetectionHuman, self._srv_start_name, self.start_det_srv_callback)
 
 
-        ## topics
-        
-        self._sub_point_depth = self.create_subscription(PointCloud2, self._topic_point_cloud_name, self.callback_points)
-        self._sub_cam_usb = self.create_subscription(Image, self._topic_image_raw, self.callback_image) ## fish eye cam
-        self._sub_cam_rgb = self.create_subscription(Image, self._topic_rgb_image, self.callback_image_rgb) ## rgb-d cam
+        ## topics and qos
+        qos_profile = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1
+        )
+
+        self._sub_point_depth = self.create_subscription(PointCloud2, self._topic_point_cloud_name, self.callback_points, qos_profile)
+
+        self._sub_cam_rgb = self.create_subscription(Image, self._topic_rgb_image, self.callback_image_rgb, qos_profile) ## rgb-d cam
 
         self._pub_img = self.create_publisher(ImageDepthHuman, self._topic_image, 1)
 
         self._r = self.create_rate(self._frec_off) # so we start with the off frecuency, 
 
-    def start_det_srv_callback(self, req, res):                                                  # ANTES ERA: def start_det_srv_callback(self, req):
+    def start_det_srv_callback(self, req, res):
         ##this service start the detection
         self._detection_active = False
         if self._debug:
-            self.get_logger().info('Detection active !!!')
+            self.get_logger().info('Start Detection callback!!!')
 
         ## compute depth
         if req.compute_depth == 'on':
             self._detection_active = True
+            self.get_logger().info('DETECTION ON')
         else:
             self._detection_active = False
             self._mode_cam = True
+            self.get_logger().info('DETECTION OFF')
 
             
         if req.initial_frec == 'low':
+            self.get_logger().info('Lowfrec')
             self._r = self.create_rate(self._frec_low)
             self._mode_off = False
 
         elif req.initial_frec == 'off':
             self._detection_active = False
-            self._mode_cam = True ##change to fish-eye cam
+            self._mode_cam = True
+            self.get_logger().info('Offfrec')
             self._r = self.create_rate(self._frec_off)
             self._mode_off = True
+
         else:
             self.get_logger().info('Highfrec')
             self._r = self.create_rate(self._frec_high)
             self._mode_off = False
-
-        # print self._detection_active -- lo comento
         
-        return res                                                                                  # ANTES ERA: return StartDetectionHumanResponse()
+        return res
 
     def change_frec_srv(self,req, res):
         if req.change_frec_to == 'off':
@@ -172,40 +185,45 @@ class camera_usb(Node):
 
             self._detection_active = False
             self._mode_cam = True ##change to fish-eye cam     -- lo pongpo a true
+            self.get_logger().info('Frecuencia OFF')
             
         elif req.change_frec_to == 'low':
             
             self._mode_off = False
             self._r = self.create_rate(self._frec_low)
+            self.get_logger().info('Frecuencia puesta a LOW')
             
         elif req.change_frec_to == 'high':
             
             self._mode_off = False
             self._r = self.create_rate(self._frec_high)
+            self.get_logger().info('Frecuencia puesta a HIGH')
             
         return res                                                                    # ANTES ERA: return ChangeFrecDetectionResponse()
     
-    def callback_points(self, point_cloud):         # esto no entiendo nada
+    def callback_points(self, point_cloud):
         self._cloud_points = point_cloud
         self._flag_cloud = True
         self._time_cloud = time.time()
 
     def callback_image(self, frame_cam):
+
+        print("nada")
+
         ##this one is coming form the usbcam (aka fish)
-        if not self._mode_cam: ##if fish
-            try:
-                if self._debug:
-                    self.get_logger().info('Fish-eye cam callback')
+        # if not self._mode_cam: ##if fish
+        #     try:
+        #         if self._debug:
+        #             self.get_logger().info('Fish-eye cam callback')
                    
-                self._header_img = frame_cam.header
-                self._frame_cv1 = self._bridge.imgmsg_to_cv2(frame_cam, "bgr8")
-                self._img_ready = True
+        #         self._header_img = frame_cam.header
+        #         self._frame_cv1 = self._bridge.imgmsg_to_cv2(frame_cam, "bgr8")
+        #         self._img_ready = True
                 
-            except CvBridgeError as e:
-                print(e)    
+        #     except CvBridgeError as e:
+        #         print(e)    
 
     def callback_image_rgb(self, frame_cam):
-
         if self._mode_cam == True:
             try:
                 if self._debug:
@@ -220,14 +238,10 @@ class camera_usb(Node):
 
     def undistort_resize(self, frame):
         frame_resize = None
-        if self._debug:
-            self.get_logger().info('undistort image')
+        # if self._debug:
+        #     self.get_logger().info('undistort image')
         if frame is not None:
-            ## undistort image
-            if not self._mode_cam: ## fish with distortion
-                frame_undis = self._calibrator.undistort(frame)
-            else:
-                frame_undis= cv2.copyMakeBorder(frame,0,0,0,0,cv2.BORDER_REPLICATE)
+            frame_undis= cv2.copyMakeBorder(frame,0,0,0,0,cv2.BORDER_REPLICATE)
 
             if frame_undis is not None:
                 ## apply factor
@@ -245,10 +259,14 @@ class camera_usb(Node):
                         
         return frame_resize
 
-    def send_images_loop(self):
+    def send_images_loop(self): #timer_callback
+
         self._detection_active = False
-        while (rclpy.ok()):          # ANTES PONIA while(not rospy.is_shutdown()()
-            ## if we dont need to compute the depth
+        thread = threading.Thread(target = rclpy.spin,args = (self,), daemon=True)
+        thread.start()
+        
+        while (rclpy.ok()):
+
             if not self._detection_active and self._img_ready: ## we are using the fish - no tiene por que
                 
                 if self._debug:
@@ -265,8 +283,8 @@ class camera_usb(Node):
                             image_msg.image_2d.header = self._header_img
 
                             image_msg.point_cloud_3d = PointCloud2()
-                            image_msg.valid_depth = 0.0 
-                            image_msg.detection_active = 0.0
+                            image_msg.valid_depth = 0 
+                            image_msg.detection_active = self._detection_active
                             self._pub_img.publish(image_msg)
                     except CvBridgeError as e:
                         pass
@@ -304,11 +322,10 @@ class camera_usb(Node):
 
                     except CvBridgeError as e:
                         pass
-
             self._r.sleep()
             
                 
-        rclpy.shutdown("Closing camera node.\n")              # ANTES PONIA rospy.signal_shutdown("Closing camera node.\n")
+        rclpy.shutdown("Closing camera node.\n")
         sys.exit(1)
         
 def main(args=None):

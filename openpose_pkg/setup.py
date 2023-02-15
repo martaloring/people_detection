@@ -13,7 +13,8 @@ setup(
         ('share/' + package_name, ['package.xml']),
         #Include all launch files from type python
         (os.path.join('share', package_name, 'launch'), glob('launch/*.yaml')),
-        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch'))
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch')),
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py'))
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -30,7 +31,6 @@ setup(
             'User2Person2 = openpose_pkg.User2Person2:main',
             'proc_human_node = openpose_pkg.proc_human_node:main',
             'window2 = openpose_pkg.window2:main',
-            'calibrator = openpose_pkg.calibrator'
         ],
     },
 )
