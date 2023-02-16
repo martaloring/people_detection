@@ -12,13 +12,14 @@ from openpose_interfaces.srv import *
 import time
 import numpy as np
 import sys
-import rospkg #for the ros pkg path
+#import rospkg #for the ros pkg path
 ### Load model ###
 from estimator2 import TfPoseEstimator
 #opencv to copy the image
 import cv2
 #import rosbag
 from rclpy.exceptions import ROSInterruptException
+from ament_index_python.packages import get_package_share_directory
 
 #########################################################
 ##### OPENPOSE detects humans when an image arrived #####
@@ -39,8 +40,8 @@ class OpenposeClass(Node):
         self._compute_depth = False
         self._move_robot = False
 
-        rospack = rospkg.RosPack()      
-        self._models_path = rospack.get_path('openpose_pkg') + '/models/graph_opt.pb'       
+        #rospack = rospkg.RosPack()      
+        self._models_path = get_package_share_directory('openpose_pkg') + '/models/graph_opt.pb'
 
         #for opencv
         self._bridge = CvBridge()
