@@ -249,18 +249,18 @@ class TfPoseEstimator:
     def __init__(self, graph_path):
 
         # load graph
-        with tf.gfile.GFile(graph_path, 'rb') as f:
-            graph_def = tf.GraphDef()
+        with tf.io.gfile.GFile(graph_path, 'rb') as f:
+            graph_def = tf.compat.v1.GraphDef()
             graph_def.ParseFromString(f.read())
 
-        self.graph = tf.get_default_graph()
-        tf.import_graph_def(graph_def, name='TfPoseEstimator')
+        self.graph = tf.compat.v1.get_default_graph()
+        tf.compat.v1.import_graph_def(graph_def, name='TfPoseEstimator')
         ################# ALBERTO
-        config = tf.ConfigProto(log_device_placement=False) ## , allow_soft_placement=True)
+        config = tf.compat.v1.ConfigProto(log_device_placement=False) ## , allow_soft_placement=True)
         config.gpu_options.allow_growth = True
         config.gpu_options.per_process_gpu_memory_fraction=0.25       
 
-        self.persistent_sess = tf.Session(graph=self.graph, config=config)
+        self.persistent_sess = tf.compat.v1.Session(graph=self.graph, config=config)
         #######################
         #self.persistent_sess = tf.Session(graph=self.graph)
 
