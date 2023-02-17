@@ -267,10 +267,13 @@ class TfPoseEstimator:
         # for op in self.graph.get_operations():
         #     print(op.name)
 
-        self.tensor_image = self.graph.get_tensor_by_name('TfPoseEstimator/image:0')
-        self.tensor_output = self.graph.get_tensor_by_name('TfPoseEstimator/Openpose/concat_stage7:0')
+        #self.tensor_image = self.graph.get_tensor_by_name('TfPoseEstimator/image:0')
+        self.tensor_image = 'TfPoseEstimator/image:0'
+        #self.tensor_output = self.graph.get_tensor_by_name('TfPoseEstimator/Openpose/concat_stage7:0')
+        self.tensor_output = 'TfPoseEstimator/Openpose/concat_stage7:0'
 
-        self.heatMat = self.pafMat = None
+        self.heatMat = None
+        self.pafMat = None
 
         # warm-up
         '''self.persistent_sess.run(
@@ -290,7 +293,6 @@ class TfPoseEstimator:
         # npimg_q += 0.5
         npimg_q = npimg_q.astype(np.uint8)
         return npimg_q
-
 
     def _get_scaled_img(self, npimg, scale, target_size=(320, 240)):
         

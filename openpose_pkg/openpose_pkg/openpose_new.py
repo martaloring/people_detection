@@ -14,12 +14,12 @@ import numpy as np
 import sys
 #import rospkg #for the ros pkg path
 ### Load model ###
+sys.path.append('/home/mapir/ros2_ws/src/openpose_pkg/openpose_pkg')
 from estimator2 import TfPoseEstimator
 #opencv to copy the image
 import cv2
 #import rosbag
 from rclpy.exceptions import ROSInterruptException
-from ament_index_python.packages import get_package_share_directory
 
 #########################################################
 ##### OPENPOSE detects humans when an image arrived #####
@@ -41,7 +41,7 @@ class OpenposeClass(Node):
         self._move_robot = False
 
         #rospack = rospkg.RosPack()      
-        self._models_path = get_package_share_directory('openpose_pkg') + '/models/graph_opt.pb'
+        self._models_path = '/home/mapir/ros2_ws/src/openpose_pkg' + '/models/graph_opt.pb'
 
         #for opencv
         self._bridge = CvBridge()
@@ -75,6 +75,13 @@ class OpenposeClass(Node):
         self._no_human_srv = self.get_parameter('~ROSServices/no_human_srv').get_parameter_value().string_value
 
         #self._srv_change_cam_handle = self.ServiceProxy(self._srv_change_cam, ChangeCam)         # el create service es cuando voy a definirlo con callback
+
+        #publishers and subscribers
+
+        ## cam topic
+        self._sub_cam = self.create_subscription(ImageDepthHuman, self._topic_image_name, self.callback_image)
+        ## humans parts and image where they were found topics
+        self._pub_human = self.create_publisher(HumanArray2, self._topic_humans_name, queue_size=1)
 
         self._openpose = TfPoseEstimator(self._models_path)
 
@@ -223,13 +230,6 @@ class OpenposeClass(Node):
 
 
     def detect_humans(self):
-
-        #publishers and subscribers
-
-        ## cam topic
-        self._sub_cam = self.create_subscription(ImageDepthHuman, self._topic_image_name, self.callback_image)
-        ## humans parts and image where they were found topics
-        self._pub_human = self.create_publisher(HumanArray2, self._topic_humans_name, queue_size=1)
 
         ## self._pub_image = rospy.Publisher(self._topic_human_frame_name, Image, queue_size=1)
         ## create the estimator
