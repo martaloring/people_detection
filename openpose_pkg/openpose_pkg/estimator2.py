@@ -100,7 +100,7 @@ class PoseEstimator:
         'idx1', 'idx2',
         'coord1', 'coord2',
         'score1', 'score2'
-    ], verbose=False)
+    ])
 
     def __init__(self):
         pass

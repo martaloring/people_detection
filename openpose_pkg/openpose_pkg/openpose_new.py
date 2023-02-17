@@ -14,12 +14,13 @@ import numpy as np
 import sys
 #import rospkg #for the ros pkg path
 ### Load model ###
-sys.path.append('/home/mapir/ros2_ws/src/openpose_pkg/openpose_pkg')
+sys.path.append('/home/mapirs/ros2_openpose/src/openpose_pkg/openpose_pkg')
 from estimator2 import TfPoseEstimator
 #opencv to copy the image
 import cv2
 #import rosbag
 from rclpy.exceptions import ROSInterruptException
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
 #########################################################
 ##### OPENPOSE detects humans when an image arrived #####
@@ -41,7 +42,7 @@ class OpenposeClass(Node):
         self._move_robot = False
 
         #rospack = rospkg.RosPack()      
-        self._models_path = '/home/mapir/ros2_ws/src/openpose_pkg' + '/models/graph_opt.pb'
+        self._models_path = '/home/mapirs/ros2_openpose/src/openpose_pkg/models/graph_opt.pb'
 
         #for opencv
         self._bridge = CvBridge()
@@ -77,11 +78,12 @@ class OpenposeClass(Node):
         #self._srv_change_cam_handle = self.ServiceProxy(self._srv_change_cam, ChangeCam)         # el create service es cuando voy a definirlo con callback
 
         #publishers and subscribers
+	#qos_profile = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1)
 
         ## cam topic
-        self._sub_cam = self.create_subscription(ImageDepthHuman, self._topic_image_name, self.callback_image)
+        self._sub_cam = self.create_subscription(ImageDepthHuman, self._topic_image_name, self.callback_image, QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1))
         ## humans parts and image where they were found topics
-        self._pub_human = self.create_publisher(HumanArray2, self._topic_humans_name, queue_size=1)
+        self._pub_human = self.create_publisher(HumanArray2, self._topic_humans_name, QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1))
 
         self._openpose = TfPoseEstimator(self._models_path)
 
@@ -221,7 +223,6 @@ class OpenposeClass(Node):
             
         human_msg.certainty = np.mean(part_scores)/10
         '''if self._single_human and human_msg.certainty > self._threshold_human:
-
         	if x_values is not None and y_values is not None:
 	            new_user = [np.mean(x_values), np.mean(y_values)]
 	            self._vel_window = self.vel_human(new_user, self._prev_user)
