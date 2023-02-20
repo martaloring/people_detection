@@ -51,7 +51,7 @@ class OpenposeClass(Node):
         ####    PARAMETERS         ####
         ###############################
         ## debug flag. show info
-        self.declare_parameter('~DebugInfo/debug_info', False)
+        self.declare_parameter('~DebugInfo/debug_info', True)
         self._debug = self.get_parameter('~DebugInfo/debug_info').get_parameter_value().bool_value
 
         # how many humans are we gonna detect ??
@@ -96,11 +96,11 @@ class OpenposeClass(Node):
         #####################
         if (self._debug):
             self.get_logger().info('Debug info activated')
-            self.get_logger().info('Single detection: %d', self._single_human)
-            self.get_logger().info('Threshold for the detection: %d', self._threshold_human)
-            self.get_logger().info('Dimensions of the image: %d - %d', self._width_img, self._height_img)
-            self.get_logger().info('Topic name for the image: %s', self._topic_image_name)
-            self.get_logger().info('Topic name for the humans: %s', self._topic_humans_name)
+            print('Single detection: %d' % (self._single_human))
+            print('Threshold for the detection: %d' % (self._threshold_human))
+            #print('Dimensions of the image: %d - %d' % (self._width_img, self._height_img))
+            print('Topic name for the image: %d' % (self._topic_image_name))
+            print('Topic name for the humans: %d' % (self._topic_humans_name))
             ## rospy.loginfo('Topic name for the humans frame: %s', self._topic_human_frame_name)
 
 
