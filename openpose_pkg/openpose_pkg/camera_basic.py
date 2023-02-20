@@ -311,6 +311,7 @@ class camera_usb(Node):
                             
                         elif self._mode_cam and self._flag_cloud:
                             image_msg.point_cloud_3d = self._cloud_points
+                            image_msg.point_cloud_3d.header.frame_id = 'camera_color_optical_frame'
 
 
                         self._pub_img.publish(image_msg)
