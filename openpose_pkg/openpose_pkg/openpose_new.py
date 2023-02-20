@@ -99,8 +99,8 @@ class OpenposeClass(Node):
             print('Single detection: %d' % (self._single_human))
             print('Threshold for the detection: %d' % (self._threshold_human))
             #print('Dimensions of the image: %d - %d' % (self._width_img, self._height_img))
-            print('Topic name for the image: %d' % (self._topic_image_name))
-            print('Topic name for the humans: %d' % (self._topic_humans_name))
+            print('Topic name for the image: %s' % (self._topic_image_name))
+            print('Topic name for the humans: %s' % (self._topic_humans_name))
             ## rospy.loginfo('Topic name for the humans frame: %s', self._topic_human_frame_name)
 
 
@@ -241,8 +241,12 @@ class OpenposeClass(Node):
         r = self.create_rate(500) #500 Hz
         self._prev_user = [0.0, 0.0]
 
+        self.get_logger().info('ESTOY EN DETECT_HUMANS')
+
         while (rclpy.ok()):          # ANTES PONIA while(not rospy.is_shutdown())    
+            self.get_logger().info('BEFORE SLEEP')
             r.sleep()
+            self.get_logger().info('AFTER SLEEP')
 
         ###self._bag.close()
         rclpy.shutdown("Exiting openpose node.\n")              # ANTES PONIA rospy.signal_shutdown("Exiting openpose node.\n")
@@ -251,6 +255,8 @@ class OpenposeClass(Node):
 
     def callback_image(self, frame_ros):
     	
+        self.get_logger().info('ESTOY EN CALLBACK_IMAGE')
+        
         try:
             self._header_ros = frame_ros.image_2d.header
             self._frame_cv = self._bridge.imgmsg_to_cv2(frame_ros.image_2d, "bgr8")
