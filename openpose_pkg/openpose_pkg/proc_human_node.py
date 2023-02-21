@@ -16,6 +16,7 @@ from rclpy.exceptions import ROSInterruptException
 
 import time
 import rospkg #for the ros pkg path
+import threading
 
 class HumanProcessorClass(Node):
     def __init__(self):
@@ -48,22 +49,26 @@ class HumanProcessorClass(Node):
         self._height_img = 100.0
         ## self._bag = rosbag.Bag('human_proc_image.bag', 'w')
 
+        self._sub_humans = self.create_subscription(HumanArray2, self._topic_humans_name, self.callback_humans) ## humans from openpose
+        
+        self._pub_user = self.create_publisher(UserRGBDArray, self._topic_human_3d_name, queue_size=100) ## first user array in """"3D"""""2
+        self._pub_img_user = self.create_publisher(Image, self._topic_human_frame_drawn_name, queue_size = 10) ##img with drawn human
+
+
         #####################
         ### DEBUG INFO    ###
         #####################
         if (self._debug):
             self.get_logger().info('Debug info activated')
-            self.get_logger().info('Topic name for the openpose-humans: %s', self._topic_humans_name)
-            self.get_logger().info('Topic name for the users (publish): %s', self._topic_human_3d_name)
+            print('Topic name for the openpose-humans: %s' % (self._topic_humans_name))
+            print('Topic name for the users (publish): %s' % (self._topic_human_3d_name))
 
     
     def process_humans(self):
-        self._bridge = CvBridge()
+        thread = threading.Thread(target = rclpy.spin,args = (self,), daemon=True)
+        thread.start()
 
-        self._sub_humans = self.create_subscription(HumanArray2, self._topic_humans_name, self.callback_humans) ## humans from openpose
-        
-        self._pub_user = self.create_publisher(UserRGBDArray, self._topic_human_3d_name, queue_size=100) ## first user array in """"3D"""""2
-        self._pub_img_user = self.create_publisher(Image, self._topic_human_frame_drawn_name, queue_size = 10) ##img with drawn human
+        self._bridge = CvBridge()
 
         r = self.create_rate(500) 
 
