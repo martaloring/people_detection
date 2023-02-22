@@ -10,12 +10,14 @@ import sys
 ##from std_msgs.msg import Int16
 import numpy as np
 from openpose_interfaces.msg import *
+sys.path.append('/home/mapirs/ros2_openpose/src/openpose_pkg/openpose_pkg')
 from proc_image import *
 #import rosbag
 from rclpy.exceptions import ROSInterruptException
 
 import time
 import rospkg #for the ros pkg path
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 import threading
 
 class HumanProcessorClass(Node):
@@ -26,13 +28,13 @@ class HumanProcessorClass(Node):
         ####    PARAMETERS         ####
         ###############################
         ## debug flag. show info
-        self.declare_parameter('~DebugInfo/debug_info', False)
+        self.declare_parameter('~DebugInfo/debug_info', True)
         self._debug = self.get_parameter('~DebugInfo/debug_info').get_parameter_value().bool_value
 
         ## topics names
         self.declare_parameter('~ROSTopics/humans_topic', '/humans') ##sub
         self.declare_parameter('~ROSTopics/video_humans_drawn_topic', '/frame_humans') ##pub
-        self.declare_parameter('~ROSTopics/humans_3d_topic', '/frame_humans') ##pub
+        self.declare_parameter('~ROSTopics/humans_3d_topic', '/users') ##pub
 
         self._topic_humans_name = self.get_parameter('~ROSTopics/humans_topic').get_parameter_value().string_value
         self._topic_human_frame_drawn_name = self.get_parameter('~ROSTopics/video_humans_drawn_topic').get_parameter_value().string_value
@@ -49,10 +51,12 @@ class HumanProcessorClass(Node):
         self._height_img = 100.0
         ## self._bag = rosbag.Bag('human_proc_image.bag', 'w')
 
-        self._sub_humans = self.create_subscription(HumanArray2, self._topic_humans_name, self.callback_humans) ## humans from openpose
+        qos_profile = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1)
+
+        self._sub_humans = self.create_subscription(HumanArray2, self._topic_humans_name, self.callback_humans, qos_profile) ## humans from openpose
         
-        self._pub_user = self.create_publisher(UserRGBDArray, self._topic_human_3d_name, queue_size=100) ## first user array in """"3D"""""2
-        self._pub_img_user = self.create_publisher(Image, self._topic_human_frame_drawn_name, queue_size = 10) ##img with drawn human
+        self._pub_user = self.create_publisher(UserRGBDArray, self._topic_human_3d_name, qos_profile) ## first user array in """"3D"""""2
+        self._pub_img_user = self.create_publisher(Image, self._topic_human_frame_drawn_name, qos_profile) ##img with drawn human
 
 
         #####################

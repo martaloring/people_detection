@@ -21,6 +21,7 @@ import cv2
 #import rosbag
 from rclpy.exceptions import ROSInterruptException
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+import threading
 
 #########################################################
 ##### OPENPOSE detects humans when an image arrived #####
@@ -241,12 +242,15 @@ class OpenposeClass(Node):
         r = self.create_rate(500) #500 Hz
         self._prev_user = [0.0, 0.0]
 
+        thread = threading.Thread(target = rclpy.spin,args = (self,), daemon=True)
+        thread.start()
+
         self.get_logger().info('ESTOY EN DETECT_HUMANS')
 
         while (rclpy.ok()):          # ANTES PONIA while(not rospy.is_shutdown())    
-            self.get_logger().info('BEFORE SLEEP')
+            #self.get_logger().info('BEFORE SLEEP')
             r.sleep()
-            self.get_logger().info('AFTER SLEEP')
+            #self.get_logger().info('AFTER SLEEP')
 
         ###self._bag.close()
         rclpy.shutdown("Exiting openpose node.\n")              # ANTES PONIA rospy.signal_shutdown("Exiting openpose node.\n")
@@ -278,8 +282,8 @@ class OpenposeClass(Node):
         humans, times = self._openpose.inference(self._frame_humans)
         ##self._bag_time.write('times_inference', times[0])
 
-        if self._debug:
-            self.get_logger().info("Inference times: %d - %d - %d ", times[0], times[1], times[2])
+        #if self._debug:
+        #    self.get_logger().info("Inference times: %d - %d - %d ", times[0], times[1], times[2])
 
         ## convert to ros msg
         humanArray_msg = self.humans_to_msg(humans, self._frame_humans, self._cloud)

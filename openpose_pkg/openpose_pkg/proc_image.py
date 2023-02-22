@@ -60,8 +60,8 @@ class HumanImage():
             bodypart3d = BodyPart3D()
             bodypart3d.idx = idx
             bodypart3d.score = score
-            bodypart3d.x_3d = x
-            bodypart3d.y_3d = y
+            bodypart3d.x_3d = float(x)
+            bodypart3d.y_3d = float(y)
             bodypart3d.z_3d = 0.0
 
             self.user_msg.body_part_3d.append(bodypart3d)
