@@ -10,7 +10,7 @@ import sys
 ##from std_msgs.msg import Int16
 import numpy as np
 from openpose_interfaces.msg import *
-sys.path.append('/home/mapirs/ros2_openpose/src/openpose_pkg/openpose_pkg')
+sys.path.append('/home/mapir/ros2_ws/src/openpose_pkg/openpose_pkg')
 from proc_image import *
 #import rosbag
 from rclpy.exceptions import ROSInterruptException

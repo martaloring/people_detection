@@ -101,8 +101,8 @@ class HumanImage():
         width_max = max(self.parts_coords.values())[0]
 
 
-        height_min = min(self.parts_coords.values()[1])
-        height_max = max(self.parts_coords.values()[1])
+        height_min = min(self.parts_coords.values())[1]
+        height_max = max(self.parts_coords.values())[1]
 
         return (width_min, width_max, height_min, height_max)
     
@@ -135,13 +135,13 @@ class HumanImage():
                 
         ## this certainty must be greater than threhsold
        
-        self.user_msg.u = self._min_rect[0]
-        self.user_msg.v = self._min_rect[2]
-        self.user_msg.w = self._min_rect[1]
-        self.user_msg.h = self._min_rect[3]
+        self.user_msg.u = float(self._min_rect[0])
+        self.user_msg.v = float(self._min_rect[2])
+        self.user_msg.w = float(self._min_rect[1])
+        self.user_msg.h = float(self._min_rect[3])
 
-        self.user_msg.pose_3d.position.x = self._center[0]
-        self.user_msg.pose_3d.position.y = self._center[1]
+        self.user_msg.pose_3d.position.x = float(self._center[0])
+        self.user_msg.pose_3d.position.y = float(self._center[1])
         self.user_msg.pose_3d.position.z = 0.0
             
                     
@@ -250,15 +250,3 @@ class HumanImageSet():
             return userarray_msg, img
 
 ##############################################
-
-        
-
-
-
-
-   
-
-
-
-
-
