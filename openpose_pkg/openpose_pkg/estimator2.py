@@ -12,6 +12,7 @@ import time
 import cv2
 import numpy as np
 import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 from scipy.ndimage import maximum_filter, gaussian_filter
 
 from cocoparts import * 
@@ -267,10 +268,10 @@ class TfPoseEstimator:
         # for op in self.graph.get_operations():
         #     print(op.name)
 
-        #self.tensor_image = self.graph.get_tensor_by_name('TfPoseEstimator/image:0')
-        self.tensor_image = 'TfPoseEstimator/image:0'
-        #self.tensor_output = self.graph.get_tensor_by_name('TfPoseEstimator/Openpose/concat_stage7:0')
-        self.tensor_output = 'TfPoseEstimator/Openpose/concat_stage7:0'
+        self.tensor_image = self.graph.get_tensor_by_name('TfPoseEstimator/image:0')
+        #self.tensor_image = 'TfPoseEstimator/image:0'
+        self.tensor_output = self.graph.get_tensor_by_name('TfPoseEstimator/Openpose/concat_stage7:0')
+        #self.tensor_output = 'TfPoseEstimator/Openpose/concat_stage7:0'
 
         self.heatMat = None
         self.pafMat = None

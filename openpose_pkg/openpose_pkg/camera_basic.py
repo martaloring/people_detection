@@ -36,7 +36,7 @@ class camera_usb(Node):
         self._debug = self.get_parameter('~DebugInfo/debug_info').get_parameter_value().bool_value
         
         ## dim of the image
-        self.declare_parameter('~ImageParameters/factor', 1.0)
+        self.declare_parameter('~ImageParameters/factor', 0.2)
         self._factor_dim = self.get_parameter('~ImageParameters/factor').get_parameter_value().double_value
         
         ## frecuencies
@@ -135,10 +135,10 @@ class camera_usb(Node):
         )
 
         self._sub_point_depth = self.create_subscription(PointCloud2, self._topic_point_cloud_name, self.callback_points, qos_profile)
-
         self._sub_cam_rgb = self.create_subscription(Image, self._topic_rgb_image, self.callback_image_rgb, qos_profile) ## rgb-d cam
 
         self._pub_img = self.create_publisher(ImageDepthHuman, self._topic_image, 1)
+        self._pub_cloud = self.create_publisher(PointCloud2, '/cloud_topic', qos_profile)
 
         self._r = self.create_rate(self._frec_off) # so we start with the off frecuency, 
 
@@ -283,9 +283,11 @@ class camera_usb(Node):
                             image_msg.image_2d.header = self._header_img
 
                             image_msg.point_cloud_3d = PointCloud2()
+                            #image_msg.point_cloud_3d = self._cloud_points
                             image_msg.valid_depth = 0 
                             image_msg.detection_active = self._detection_active
                             self._pub_img.publish(image_msg)
+                            self._pub_cloud.publish(self._cloud_points)
                     except CvBridgeError as e:
                         pass
 
@@ -315,6 +317,7 @@ class camera_usb(Node):
 
 
                         self._pub_img.publish(image_msg)
+                        self._pub_cloud.publish(image_msg.point_cloud_3d)
                         self._img_ready = False
                         self._flag_cloud = False
 
