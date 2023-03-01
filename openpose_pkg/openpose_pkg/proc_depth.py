@@ -93,11 +93,11 @@ class HumanDepth():
         if self._factor < 1:
             # w_out = - self._factor * w
             # h_out = - self._factor * h
-            w_out = int(self._factor * w)
-            h_out = int(self._factor * h)
+            w_out = int(w/self._factor)
+            h_out = int(h/self._factor)
         elif self._factor > 1:
-            w_out = int( w / self._factor)
-            h_out = int ( h / self._factor) 
+            w_out = int( w/self._factor)
+            h_out = int ( h/self._factor) 
         else:
             w_out = w
             h_out = h
@@ -121,15 +121,22 @@ class HumanDepth():
             h_img = part_idx.y_3d
             point3d = [0.0, 0.0, 0.0]
 
-            #w, h = self.get_point_from_fish(w_img, h_img)
-            print('w: %d' % (w_img))
-            point3d = point_cloud2.read_points(self._data_cloud, skip_nans=False, uvs=iter((w_img, h_img)))
-            point3d = point3d[(1)]
-            # for j in point3d:
-            #     print(j)
-                #print('Para ver el formato: %f' % (point3d[1]))
-            #point3d, has_nan = self._data_cloud.read_point(w, h)
-
+            r,c = self.get_point_from_fish(w_img, h_img)
+            w = self._data_cloud.width
+            index = c*w + r
+            print('w: %d' % (index))
+            #point3d = point_cloud2.read_points(self._data_cloud, skip_nans=False, uvs=iter((h, w)))
+            index_arr = np.array(index)
+            point3d = point_cloud2.read_points(self._data_cloud, skip_nans=False, uvs=index_arr)
+            print('punto persona:')
+            print(point3d)
+            #--------------------------------------------------
+            # esquina3d = [0.0, 0.0, 0.0]
+            # esquina3d = point_cloud2.read_points(self._data_cloud, skip_nans=False, uvs=iter(1, 1))
+            # esquina3d = esquina3d[(0)]
+            # print('punto esquina:')
+            # print(esquina3d)
+            #--------------------------------------------------
             #if not has_nan:
             for i in range(len(mean_depth)):
 
@@ -156,7 +163,7 @@ class HumanDepth():
         if len(depth_array) > 0:
             var_depth = float(np.var(depth_array))
             ##print var_depth
-            print(var_depth)
+            #print(var_depth)
             if var_depth > 0.0001:
                 correct = True
     
@@ -496,11 +503,11 @@ class HumanDepth():
               ##  self._new_user_rgbd_msg.human_height = height_human
 
             self._new_user_rgbd_msg.pose_3d.position.x = float(mean_depth[0])
-            print('x: %f' % (mean_depth[0]))
+            #print('x: %f' % (self._new_user_rgbd_msg.pose_3d.position.x))
             self._new_user_rgbd_msg.pose_3d.position.y = float(mean_depth[1])
-            print('y: %f' % (mean_depth[1]))
+            #print('y: %f' % (self._new_user_rgbd_msg.pose_3d.position.y))
             self._new_user_rgbd_msg.pose_3d.position.z = float(mean_depth[2])
-            print('z: %f' % (mean_depth[2]))
+            #print('z: %f' % (self._new_user_rgbd_msg.pose_3d.position.z))
             
             ## we still need to update the orientaation
                             

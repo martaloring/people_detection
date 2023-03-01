@@ -5,6 +5,7 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image, PointCloud2
 from visualization_msgs.msg import MarkerArray, Marker
+from geometry_msgs.msg import PoseArray, Pose
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import sys
@@ -61,6 +62,9 @@ class HumanDepthProcessorClass(Node):
         self._pub_marker = self.create_publisher(MarkerArray, self._topic_marker, qos_profile) 
         self._pub_markers_body = self.create_publisher(MarkerArray, self._topic_body_3d_markers, qos_profile) ##img with drawn human
 
+        qos_profile2 = QoSProfile(reliability=ReliabilityPolicy.RELIABLE, history=HistoryPolicy.KEEP_LAST, depth=1)
+        self._pub_poses= self.create_publisher(PoseArray, '/poses_topic', qos_profile2) ##img with drawn human
+
 
         self._header_users = None
         self._users = None
@@ -112,8 +116,18 @@ class HumanDepthProcessorClass(Node):
                     self._pub_user.publish(userarray_msg)
                     self._pub_marker.publish(userarrarmarker_msg)
                     self.get_logger().info('publishing users3D')
+
                     if self._create_body_3d:
                         self._pub_markers_body.publish(markers_body)
+                    
+                    pos_msg = PoseArray()
+                    pos_msg.header = userarray_msg.header
+                    pos_msg.poses.append(userarray_msg.users[0].pose_3d)
+
+                    for i in range(1,(len(userarray_msg.users))):
+                        pos_msg.poses.append(userarray_msg.users[i].pose_3d)
+
+                    self._pub_poses.publish(pos_msg)
 
     def callback_cloud(self, cloud):
 
