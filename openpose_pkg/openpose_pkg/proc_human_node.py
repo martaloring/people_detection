@@ -112,8 +112,16 @@ class HumanProcessorClass(Node):
             depth_humans2.compute_depth = compute_depth
 
             if(len(depth_humans2.users) > 0):
-
                 self._pub_user.publish(depth_humans2)
+
+            else:
+                pub_empty = UserRGBDArray()
+                self._pub_user.publish(pub_empty)
+
+        else:
+            pub_empty = UserRGBDArray()
+            self._pub_user.publish(pub_empty)
+
 
 
         if (image is None):  

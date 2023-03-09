@@ -16,11 +16,16 @@ sys.path.append('/home/mapir/ros2_ws/src/openpose_pkg/openpose_pkg')
 from proc_depth import *
 #import rosbag
 from rclpy.exceptions import ROSInterruptException
-
+from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
+import tf2_geometry_msgs
 import time
 import rospkg #for the ros pkg path
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 import threading
+from geometry_msgs.msg import TransformStamped
+from tf_transformations import quaternion_from_euler
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
 
 class HumanDepthProcessorClass(Node):
     def __init__(self):
@@ -72,6 +77,31 @@ class HumanDepthProcessorClass(Node):
         self._height_img = 100.0
         self._cloud = PointCloud2()
 
+        # CREAMOS LA TRANSFORMADA (camera_link -> base_link) PARA ENVIAR LA POSE RESPECTO A BASE_LINK
+
+        self.t = TransformStamped()
+        self.tf_static_broadcaster = StaticTransformBroadcaster(self)
+
+        self.t.header.stamp = self.get_clock().now().to_msg()
+        self.t.header.frame_id = 'base_link'
+        self.t.child_frame_id = 'camera_link'
+
+        self.t.transform.translation.x = float(0.15)
+        self.t.transform.translation.y = float(0.0)
+        self.t.transform.translation.z = float(1.0)
+        quat = quaternion_from_euler(
+            float(0.0), float(0.0), float(0.0))
+        self.t.transform.rotation.x = quat[0]
+        self.t.transform.rotation.y = quat[1]
+        self.t.transform.rotation.z = quat[2]
+        self.t.transform.rotation.w = quat[3]
+
+        self.tf_static_broadcaster.sendTransform(self.t)
+
+        # CREAMOS LOS OBJETOS NECESARIOS PARA ESCUCHAR (camara->map)
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
+
         #####################
         ### DEBUG INFO    ###
         #####################
@@ -88,8 +118,9 @@ class HumanDepthProcessorClass(Node):
 
         r = self.create_rate(500) 
         #self._k = 0
-        while (rclpy.ok()):          # ANTES PONIA while(not rospy.is_shutdown()()
+        while (rclpy.ok()):
             r.sleep()
+
         
         rclpy._shutdown("Exiting openpose publisher node.\n")
         sys.exit(1)
@@ -105,13 +136,16 @@ class HumanDepthProcessorClass(Node):
 
         if len(self._users.users) > 0:
             #print('number of users: %d' % (len(self._users.users)))
+
             stamp = self.get_clock().now().to_msg()
             users = HumanDepthSet(self._users, self._factor, self._create_body_3d, stamp)
             userarray_msg, userarrarmarker_msg, markers_body, cloud_correct = users.create_msg_depth_cloud()
             ###print userarray_msg
+
             if cloud_correct:
                 self.get_logger().info('cloud correct')
                 print('number of users: %d' % (len(userarray_msg.users)))
+
                 if len(userarray_msg.users) > 0:
                     self._pub_user.publish(userarray_msg)
                     self._pub_marker.publish(userarrarmarker_msg)
@@ -120,19 +154,31 @@ class HumanDepthProcessorClass(Node):
                     if self._create_body_3d:
                         self._pub_markers_body.publish(markers_body)
                     
+                    # TRANSFORMAMOS LAS POSES Y LAS PUBLICAMOS
+                    camera_to_map = self.tf_buffer.lookup_transform(
+                        'map',
+                        'camera_color_optical_frame',
+                        rclpy.time.Time())
+                    
                     pos_msg = PoseArray()
                     pos_msg.header = userarray_msg.header
-                    pos_msg.poses.append(userarray_msg.users[0].pose_3d)
 
-                    for i in range(1,(len(userarray_msg.users))):
-                        pos_msg.poses.append(userarray_msg.users[i].pose_3d)
+                    for i in range(0,(len(userarray_msg.users))):
+                        pose_transformed = tf2_geometry_msgs.do_transform_pose(userarray_msg.users[i].pose_3d, camera_to_map)
+                        pos_msg.poses.append(pose_transformed)
 
                     self._pub_poses.publish(pos_msg)
+        else:
+            pos_msg = PoseArray()
+            self._pub_poses.publish(pos_msg)
+
 
     def callback_cloud(self, cloud):
 
         self._cloud = cloud
         self.get_logger().info('CALLBACK_CLOUD')
+        # pos_msg = PoseArray()
+        # self._pub_poses.publish(pos_msg)
 
                         
 def main(args=None):
