@@ -52,34 +52,25 @@ class OpenposeClass(Node):
         ####    PARAMETERS         ####
         ###############################
         ## debug flag. show info
-        self.declare_parameter('~DebugInfo/debug_info', True)
-        self._debug = self.get_parameter('~DebugInfo/debug_info').get_parameter_value().bool_value
+        self.declare_parameter('DebugInfo.debug_info', True)
+        self._debug = self.get_parameter('DebugInfo.debug_info').get_parameter_value().bool_value
 
         # how many humans are we gonna detect ??
-        self.declare_parameter('~HumanDetected/single_human', False)
-        self._single_human = self.get_parameter('~HumanDetected/single_human').get_parameter_value().bool_value
+        self.declare_parameter('HumanDetected.single_human', False)
+        self._single_human = self.get_parameter('HumanDetected.single_human').get_parameter_value().bool_value
 
         ## threshold for the confidence of the detection
-        self.declare_parameter('~HumanDetected/threshold_human', 0.0)
-        self._threshold_human = self.get_parameter('~HumanDetected/threshold_human').get_parameter_value().double_value
+        self.declare_parameter('HumanDetected.threshold_human', 0.0)
+        self._threshold_human = self.get_parameter('HumanDetected.threshold_human').get_parameter_value().double_value
 
         ## topics names
-        self.declare_parameter('~ROSTopics/image_topic', 'openpose/usb_cam/image_dim_CODE')
-        self.declare_parameter('~ROSTopics/humans_topic', '/humans')
-        #self.declare_parameter('~ROSTopics/frame_humans_topic', '/frame_humans')
-        #self.declare_parameter('~ROSServices/change_cam', '/off_frec')
-        self.declare_parameter('~ROSServices/no_human_srv', '/human')
+        self.declare_parameter('ROSTopics.image_topic', 'openpose/usb_cam/image_dim_YAML')
+        self.declare_parameter('ROSTopics.humans_topic', 'openpose/humans')
+        self.declare_parameter('ROSServices.no_human_srv', '/human')
 
-        self._topic_image_name =  self.get_parameter('~ROSTopics/image_topic').get_parameter_value().string_value
-        self._topic_humans_name = self.get_parameter('~ROSTopics/humans_topic').get_parameter_value().string_value
-        ## self._topic_human_frame_name = self.get_parameter('~ROSTopics/frame_humans_topic').get_parameter_value().string_value
-        #self._srv_change_cam = self.get_parameter('~ROSServices/change_cam').get_parameter_value().string_value
-        self._no_human_srv = self.get_parameter('~ROSServices/no_human_srv').get_parameter_value().string_value
-
-        #self._srv_change_cam_handle = self.ServiceProxy(self._srv_change_cam, ChangeCam)         # el create service es cuando voy a definirlo con callback
-
-        #publishers and subscribers
-	#qos_profile = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1)
+        self._topic_image_name =  self.get_parameter('ROSTopics.image_topic').get_parameter_value().string_value
+        self._topic_humans_name = self.get_parameter('ROSTopics.humans_topic').get_parameter_value().string_value
+        self._no_human_srv = self.get_parameter('ROSServices.no_human_srv').get_parameter_value().string_value
 
         ## cam topic
         self._sub_cam = self.create_subscription(ImageDepthHuman, self._topic_image_name, self.callback_image, QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1))
