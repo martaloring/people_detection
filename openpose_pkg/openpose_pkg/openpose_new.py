@@ -79,7 +79,7 @@ class OpenposeClass(Node):
         #self._srv_change_cam_handle = self.ServiceProxy(self._srv_change_cam, ChangeCam)         # el create service es cuando voy a definirlo con callback
 
         #publishers and subscribers
-	    #qos_profile = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1)
+	#qos_profile = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1)
 
         ## cam topic
         self._sub_cam = self.create_subscription(ImageDepthHuman, self._topic_image_name, self.callback_image, QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1))
