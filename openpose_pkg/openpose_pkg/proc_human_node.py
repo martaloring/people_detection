@@ -28,20 +28,20 @@ class HumanProcessorClass(Node):
         ####    PARAMETERS         ####
         ###############################
         ## debug flag. show info
-        self.declare_parameter('~DebugInfo/debug_info', True)
-        self._debug = self.get_parameter('~DebugInfo/debug_info').get_parameter_value().bool_value
+        self.declare_parameter('DebugInfo.debug_info', True)
+        self._debug = self.get_parameter('DebugInfo.debug_info').get_parameter_value().bool_value
 
         ## topics names
-        self.declare_parameter('~ROSTopics/humans_topic', '/humans') ##sub
-        self.declare_parameter('~ROSTopics/video_humans_drawn_topic', '/frame_humans') ##pub
-        self.declare_parameter('~ROSTopics/humans_3d_topic', '/users') ##pub
+        self.declare_parameter('ROSTopics.humans_topic', '/humans') ##sub
+        self.declare_parameter('ROSTopics.video_humans_drawn_topic', '/frame_humans') ##pub
+        self.declare_parameter('ROSTopics.humans_3d_topic', '/users') ##pub
 
-        self._topic_humans_name = self.get_parameter('~ROSTopics/humans_topic').get_parameter_value().string_value
-        self._topic_human_frame_drawn_name = self.get_parameter('~ROSTopics/video_humans_drawn_topic').get_parameter_value().string_value
-        self._topic_human_3d_name = self.get_parameter('~ROSTopics/humans_3d_topic').get_parameter_value().string_value
+        self._topic_humans_name = self.get_parameter('ROSTopics.humans_topic').get_parameter_value().string_value
+        self._topic_human_frame_drawn_name = self.get_parameter('ROSTopics.video_humans_drawn_topic').get_parameter_value().string_value
+        self._topic_human_3d_name = self.get_parameter('ROSTopics.humans_3d_topic').get_parameter_value().string_value
 
-        self.declare_parameter('~HumanDetected/threshold_human', 0.3)
-        self._threshold = self.get_parameter('~HumanDetected/threshold_human').get_parameter_value().double_value
+        self.declare_parameter('HumanDetected.threshold_human', 0.3)
+        self._threshold = self.get_parameter('HumanDetected.threshold_human').get_parameter_value().double_value
 
         self._header_img = None
 

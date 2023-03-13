@@ -32,35 +32,38 @@ class camera_usb(Node):
         ####    PARAMETERS         ####
         ###############################  
         ## debug flag. show info
-        self.declare_parameter('~DebugInfo/debug_info', True)
-        self._debug = self.get_parameter('~DebugInfo/debug_info').get_parameter_value().bool_value
+        self.declare_parameter('DebugInfo.debug_info', True)
+        self._debug = self.get_parameter('DebugInfo.debug_info').get_parameter_value().bool_value
         
         ## dim of the image
-        self.declare_parameter('~ImageParameters/factor', 0.2)
-        self._factor_dim = self.get_parameter('~ImageParameters/factor').get_parameter_value().double_value
+        self.declare_parameter('ImageParameters.factor', 0.2)
+        self._factor_dim = self.get_parameter('ImageParameters.factor').get_parameter_value().double_value
         
         ## frecuencies
-        self.declare_parameter('~FrecInference/off_frec', 0)
-        self.declare_parameter('~FrecInference/low_frec', 5)
-        self.declare_parameter('~FrecInference/high_frec', 10)
-        self._frec_off = self.get_parameter('~FrecInference/off_frec').get_parameter_value().integer_value
-        self._frec_low = self.get_parameter('~FrecInference/low_frec').get_parameter_value().integer_value
-        self._frec_high = self.get_parameter('~FrecInference/high_frec').get_parameter_value().integer_value
+        self.declare_parameter('FrecInference.off_frec', 0)
+        self.declare_parameter('FrecInference.low_frec', 5)
+        self.declare_parameter('FrecInference.high_frec', 10)
+        self._frec_off = self.get_parameter('FrecInference.off_frec').get_parameter_value().integer_value
+        self._frec_low = self.get_parameter('FrecInference.low_frec').get_parameter_value().integer_value
+        self._frec_high = self.get_parameter('FrecInference.high_frec').get_parameter_value().integer_value
 
         ## services names
-        self.declare_parameter('~ROSServices/change_frec_srv', '/change_frec')
-        self.declare_parameter('~ROSServices/start_detection_srv', '/openpose/start_detection_humans_service')
-        self._srv_change_name = self.get_parameter('~ROSServices/change_frec_srv').get_parameter_value().string_value
-        self._srv_start_name = self.get_parameter('~ROSServices/start_detection_srv').get_parameter_value().string_value
+        self.declare_parameter('ROSServices.change_frec_srv', '/change_frec')
+        self.declare_parameter('ROSServices.start_detection_srv', '/openpose/start_detection_humans_service')
+        self._srv_change_name = self.get_parameter('ROSServices.change_frec_srv').get_parameter_value().string_value
+        self._srv_start_name = self.get_parameter('ROSServices.start_detection_srv').get_parameter_value().string_value
 
 
         ## topics names
-        self.declare_parameter('~ROSTopics/image_topic', 'openpose/usb_cam/image_dim_CODE') ##pub -- esto es lo que le pasa al siguente nodo (openpose_new)
-        self.declare_parameter('~ROSTopics/depth_cloud_topic', '/camera/depth/points') ##sub -- depth cloud
-        self.declare_parameter('~ROSTopics/rgb_cam_topic', '/camera/color/image_raw') ##sub -- aqui tenemos que publicar desde la camara
-        self._topic_image =  self.get_parameter('~ROSTopics/image_topic').get_parameter_value().string_value
-        self._topic_point_cloud_name = self.get_parameter('~ROSTopics/depth_cloud_topic').get_parameter_value().string_value
-        self._topic_rgb_image = self.get_parameter('~ROSTopics/rgb_cam_topic').get_parameter_value().string_value
+
+        self.declare_parameter('ROSTopics.image_topic', 'openpose/usb_cam/image_dim_CODE') ##pub -- esto es lo que le pasa al siguente nodo (openpose_new)
+        #self.declare_parameter('~ROSTopics/image_topic')
+        #self.declare_parameter('~ROSTopics/image_topic', None)
+        self.declare_parameter('ROSTopics.depth_cloud_topic', '/camera/depth/points') ##sub -- depth cloud
+        self.declare_parameter('ROSTopics.rgb_cam_topic', '/camera/color/image_raw') ##sub -- aqui tenemos que publicar desde la camara
+        self._topic_image =  self.get_parameter('ROSTopics.image_topic').get_parameter_value().string_value
+        self._topic_point_cloud_name = self.get_parameter('ROSTopics.depth_cloud_topic').get_parameter_value().string_value
+        self._topic_rgb_image = self.get_parameter('ROSTopics.rgb_cam_topic').get_parameter_value().string_value
 
         #####################
         ### DEBUG INFO    ###

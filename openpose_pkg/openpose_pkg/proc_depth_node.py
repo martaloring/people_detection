@@ -35,27 +35,27 @@ class HumanDepthProcessorClass(Node):
         ####    PARAMETERS         ####
         ###############################
         ## debug flag. show info
-        self.declare_parameter('~DebugInfo/debug_info', True)
-        self._debug = self.get_parameter('~DebugInfo/debug_info').get_parameter_value().bool_value
+        self.declare_parameter('DebugInfo.debug_info', True)
+        self._debug = self.get_parameter('DebugInfo.debug_info').get_parameter_value().bool_value
 
-        self.declare_parameter('~ImageParameters/factor', 0.2)
-        self._factor = self.get_parameter('~ImageParameters/factor').get_parameter_value().double_value
+        self.declare_parameter('ImageParameters.factor', 0.2)
+        self._factor = self.get_parameter('ImageParameters.factor').get_parameter_value().double_value
 
-        self.declare_parameter('~HumanDetected/compute_body', False)
-        self._create_body_3d = self.get_parameter('~HumanDetected/compute_body').get_parameter_value().bool_value
+        self.declare_parameter('HumanDetected.compute_body', False)
+        self._create_body_3d = self.get_parameter('HumanDetected.compute_body').get_parameter_value().bool_value
 
         ## topics names
-        self.declare_parameter('~ROSTopics/humans_3d_topic', '/users') ##sub
-        self.declare_parameter('~ROSTopics/users_3d_topic', '/users3D') ##pub
-        self.declare_parameter('~ROSTopics/marker_users_topic', '/markers_users') # array de markers en el espacio, cada uno marca una pose
-        self.declare_parameter('~ROSServices/no_human_srv', '/human')
-        self.declare_parameter('~ROSTopics/markers_3d_body_parts_topic', '/markers_body') # array de markers en el espacio, indicando las partes del humano en el espacio (lineas y esferas)
+        self.declare_parameter('ROSTopics.humans_3d_topic', '/users') ##sub
+        self.declare_parameter('ROSTopics.users_3d_topic', '/users3D') ##pub
+        self.declare_parameter('ROSTopics.marker_users_topic', '/markers_users') # array de markers en el espacio, cada uno marca una pose
+        self.declare_parameter('ROSServices.no_human_srv', '/human')
+        self.declare_parameter('ROSTopics.markers_3d_body_parts_topic', '/markers_body') # array de markers en el espacio, indicando las partes del humano en el espacio (lineas y esferas)
 
-        self._topic_human_3d_name = self.get_parameter('~ROSTopics/humans_3d_topic').get_parameter_value().string_value ##sub
-        self._topic_users_3d = self.get_parameter('~ROSTopics/users_3d_topic').get_parameter_value().string_value ##pub
-        self._topic_marker = self.get_parameter('~ROSTopics/marker_users_topic').get_parameter_value().string_value
-        self._no_human_srv = self.get_parameter('~ROSServices/no_human_srv').get_parameter_value().string_value
-        self._topic_body_3d_markers = self.get_parameter('~ROSTopics/markers_3d_body_parts_topic').get_parameter_value().string_value
+        self._topic_human_3d_name = self.get_parameter('ROSTopics.humans_3d_topic').get_parameter_value().string_value ##sub
+        self._topic_users_3d = self.get_parameter('ROSTopics.users_3d_topic').get_parameter_value().string_value ##pub
+        self._topic_marker = self.get_parameter('ROSTopics.marker_users_topic').get_parameter_value().string_value
+        self._no_human_srv = self.get_parameter('ROSServices.no_human_srv').get_parameter_value().string_value
+        self._topic_body_3d_markers = self.get_parameter('ROSTopics.markers_3d_body_parts_topic').get_parameter_value().string_value
 
         #publishers and subscribers
         qos_profile = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1)
