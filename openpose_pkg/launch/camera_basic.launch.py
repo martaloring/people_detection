@@ -6,7 +6,7 @@ def generate_launch_description():
     ld = LaunchDescription()
     config = os.path.join(
         get_package_share_directory('openpose_pkg'),
-        'launch',
+        'config',
         'openpose.yaml'
         )
         
@@ -16,5 +16,6 @@ def generate_launch_description():
         executable = 'camera_basic',
         parameters = [config]
     )
+   
     ld.add_action(node)
     return ld
