@@ -1,5 +1,0 @@
-<launch>
- 	  <node pkg="openpose_pkg" exec="camera_basic" name="camera_basic">
- 	        <param from="/home/mapir/ros2_ws/src/openpose_pkg/launch/openpose.yaml"/>
-  	  </node>
-</launch>
