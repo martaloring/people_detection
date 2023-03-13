@@ -65,3 +65,13 @@
           
         ROSServices:
             start_detection_srv : openpose/start_detection_humans_service
+            
+        CameraToBaseLinkTF:
+            translation_x : 0.15
+            translation_y : 0.0
+            translation_z : 1.0
+            rotation_x : 0.0
+            rotation_y : 0.0
+            rotation_z : 0.0
+            rotation_w : 0.0
+            
