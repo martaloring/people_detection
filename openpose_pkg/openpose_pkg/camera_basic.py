@@ -12,8 +12,6 @@ import sys
 import numpy as np
 from openpose_interfaces.srv import *
 from openpose_interfaces.msg import *
-# from calibrator import Calibrator
-import rospkg #for the ros pkg path
 import time
 from rclpy.exceptions import ROSInterruptException
 import threading
@@ -57,8 +55,6 @@ class camera_usb(Node):
         ## topics names
 
         self.declare_parameter('ROSTopics.image_topic', 'openpose/usb_cam/image_dim_CODE') ##pub -- esto es lo que le pasa al siguente nodo (openpose_new)
-        #self.declare_parameter('~ROSTopics/image_topic')
-        #self.declare_parameter('~ROSTopics/image_topic', None)
         self.declare_parameter('ROSTopics.depth_cloud_topic', '/camera/depth/points') ##sub -- depth cloud
         self.declare_parameter('ROSTopics.rgb_cam_topic', '/camera/color/image_raw') ##sub -- aqui tenemos que publicar desde la camara
         self._topic_image =  self.get_parameter('ROSTopics.image_topic').get_parameter_value().string_value

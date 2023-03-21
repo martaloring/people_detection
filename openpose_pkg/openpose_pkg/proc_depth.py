@@ -4,22 +4,16 @@ from __future__ import division # division returns a floating point number
 import os
 
 import numpy as np
-import cv2
-import math
-import rclpy
-import time
-from enum import Enum
 from openpose_interfaces.msg import *
 from openpose_interfaces.srv import *
 from tf_transformations import *
 from math import pi
-from sensor_msgs.msg import Image, PointCloud2
+from sensor_msgs.msg import PointCloud2
 from sensor_msgs_py import point_cloud2
 #import sensor_msgs.point_cloud2 as pc2
 from tf_transformations import quaternion_from_euler
 #from pointcloud2msg import PointCloudClass
 from visualization_msgs.msg import MarkerArray, Marker
-from std_msgs.msg import ColorRGBA
 from geometry_msgs.msg import Point, Pose
 from cocoparts import *
 from rclpy.duration import Duration
@@ -61,43 +55,17 @@ class HumanDepth():
 
         self._stamp = stamp
         
-########################################### 
-
-    # def get_mean_depth(self, w_min, w_max, h_min, h_max): ## DONT USE
-
-    #     mean_depth = [0.0, 0.0, 0.0]
-    #     correct = True
-    #     n = 0
-    #     for width in range (w_min, w_max):
-    #         for height in range (h_min, h_max):
-    #             w, h = self.get_point_from_fish(width, height)
-    #             depth_xyz, has_nan = self._data_cloud.read_point(w, h)
-
-    #             if not has_nan:
-    #                 for i in range(3):
-    #                     mean_depth[i] += depth_xyz[i]
-    #             n += 1
-    #     if n > 0: 
-    #         for i in range(3):
-    #             mean_depth[i] = float (mean_depth[i] / n)
-    #     else:
-    #         correct = False
-    #     return correct, mean_depth
-
 ##############################################
 #######     UNDO THE FACTOR RESIZE      ######
 ##############################################
 
     def get_point_from_fish(self, w, h):
-        ## here comes the deform
         if self._factor < 1:
-            # w_out = - self._factor * w
-            # h_out = - self._factor * h
             w_out = int(w/self._factor)
             h_out = int(h/self._factor)
         elif self._factor > 1:
-            w_out = int( w/self._factor)
-            h_out = int ( h/self._factor) 
+            w_out = int(w/self._factor)
+            h_out = int (h/self._factor) 
         else:
             w_out = w
             h_out = h
@@ -109,8 +77,8 @@ class HumanDepth():
 
     def get_body_pose(self):
         mean_depth = [0.0, 0.0, 0.0]
-        correct = False ## this flag says if the perosn is 3D
-        depth_array = [] ##we are gonna use this for the var
+        correct = False # this flag says if the perosn is 3D
+        depth_array = [] # we are gonna use this for the var
         self._indices_body = []
         
         k = 0 ##number of parts
@@ -124,20 +92,9 @@ class HumanDepth():
             r,c = self.get_point_from_fish(w_img, h_img)
             w = self._data_cloud.width
             index = c*w + r
-            print('w: %d' % (index))
-            #point3d = point_cloud2.read_points(self._data_cloud, skip_nans=False, uvs=iter((h, w)))
             index_arr = np.array(index)
             point3d = point_cloud2.read_points(self._data_cloud, skip_nans=False, uvs=index_arr)
-            print('punto persona:')
-            print(point3d)
-            #--------------------------------------------------
-            # esquina3d = [0.0, 0.0, 0.0]
-            # esquina3d = point_cloud2.read_points(self._data_cloud, skip_nans=False, uvs=iter(1, 1))
-            # esquina3d = esquina3d[(0)]
-            # print('punto esquina:')
-            # print(esquina3d)
-            #--------------------------------------------------
-            #if not has_nan:
+
             for i in range(len(mean_depth)):
 
                 mean_depth[i] += float(point3d[i])
@@ -145,7 +102,7 @@ class HumanDepth():
                 if i == 2:
                     ##depth component
                     depth_array.append(point3d[i])
-                    #print('Para ver el formato: %f' % (point3d[i]))
+
             k += 1
 
             if self._detect_body:
@@ -162,8 +119,7 @@ class HumanDepth():
 
         if len(depth_array) > 0:
             var_depth = float(np.var(depth_array))
-            ##print var_depth
-            #print(var_depth)
+
             if var_depth > 0.0001:
                 correct = True
     
@@ -344,7 +300,7 @@ class HumanDepth():
 
         return marker_msg
 
-    def get_human_height(self): ## weird integers!!!
+    def get_human_height(self):
         valid = False
         human_height = None
         exist_top, exist_feet = False, False
@@ -391,11 +347,8 @@ class HumanDepth():
                 break
 
         if exist_feet and exist_top and len(depth_top) > 0 and len(depth_feet) > 0:
-            #print 'head', depth_top
-            #print 'feet', depth_feet
             human_height = depth_top[1] - depth_feet[1]
             valid = True
-            #print human_height
 
 
         return human_height, valid
@@ -412,7 +365,6 @@ class HumanDepth():
         exist_leye = False
         exist_reye = False
 
-        ###print 'orientation'
         ## this way we just need this loop once
 
         for part in (self._body_part_3d):
@@ -496,18 +448,9 @@ class HumanDepth():
 
             self._new_user_rgbd_msg.valid_orientation = ok2
 
-            ##print 'orientation valid'
-            ##height_human, valid = self.get_human_height()
-
-            ##if valid:
-              ##  self._new_user_rgbd_msg.human_height = height_human
-
             self._new_user_rgbd_msg.pose_3d.position.x = float(mean_depth[0])
-            #print('x: %f' % (self._new_user_rgbd_msg.pose_3d.position.x))
             self._new_user_rgbd_msg.pose_3d.position.y = float(mean_depth[1])
-            #print('y: %f' % (self._new_user_rgbd_msg.pose_3d.position.y))
             self._new_user_rgbd_msg.pose_3d.position.z = float(mean_depth[2])
-            #print('z: %f' % (self._new_user_rgbd_msg.pose_3d.position.z))
             
             ## we still need to update the orientaation
                             
@@ -545,7 +488,6 @@ class HumanDepthSet():
         self.image_w = msg_humans.image_w
         self.image_h = msg_humans.image_h
         self.compute_depth = msg_humans.compute_depth
-        #self._point_cloud = PointCloud2(msg_humans.cloud, field_names = ["x", "y", "z"])
         self._point_cloud = PointCloud2()
         self._point_cloud = msg_humans.cloud
         
@@ -571,7 +513,8 @@ class HumanDepthSet():
             cont = 0
             for human in (self._humans_array):
                 cont = cont + 1
-                #print('humano numero: %d' % (cont))
+                print('persona nº:')
+                print(cont)
                 user_msg = User3D()
                 marker_msg = Marker()
                 marker_arrow_msg = Marker() 

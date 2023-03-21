@@ -14,30 +14,13 @@
         HumanDetected:
             threshold_human : 0.4
             single_human : False
-            compute_body : True
+            compute_body : False
             keep_alive : 0.5  # in secs
             max_freq_pub : 10 ## Hz
 
         ImageParameters:
             factor : 0.2
-          
-        RobotParam: 
-            turning_speed : 0.3
-            error_dist : 10           # (px) Threshold to consider user centered on image
-            time_out_detection: 1.0   # (Sec) Timeout for aborting if user not found
-            verbose: False
-         
-        Rooms:
-            office : False
-            free : True
-            Corner : True
-
-        DualCams:
-            use_dual_camera : False
-            iterations_up : 1
-            iterations_down : 1
-            rotate_images : True
-          
+                    
         ROSTopics:
             image_topic : openpose/usb_cam/image_dim_YAML
             humans_topic: openpose/humans
@@ -56,7 +39,6 @@
 
             users_3d_topic : openpose/users_3d_depth
             marker_users_topic : openpose/appro_user_markers
-            cmd_vel_topic : cmd_vel
             markers_3d_body_parts_topic : openpose/body_3d_markers
             people : people
 

@@ -1,25 +1,18 @@
 #!/usr/bin/env python
 
-## we need the frequency
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image, PointCloud2
-from visualization_msgs.msg import MarkerArray, Marker
-from geometry_msgs.msg import PoseArray, Pose
-import cv2
-from cv_bridge import CvBridge, CvBridgeError
+from visualization_msgs.msg import MarkerArray
+from geometry_msgs.msg import PoseArray
+from cv_bridge import CvBridge
 import sys
-##from std_msgs.msg import Int16
-import numpy as np
 from openpose_interfaces.msg import *
 sys.path.append('/home/mapir/ros2_ws/src/openpose_pkg/openpose_pkg')
 from proc_depth import *
-#import rosbag
 from rclpy.exceptions import ROSInterruptException
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 import tf2_geometry_msgs
-import time
-import rospkg #for the ros pkg path
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 import threading
 from geometry_msgs.msg import TransformStamped
@@ -77,6 +70,22 @@ class HumanDepthProcessorClass(Node):
         self._height_img = 100.0
         self._cloud = PointCloud2()
 
+        # camera to base_link params
+        self.declare_parameter('CameraToBaseLinkTF.translation_x', 0.15)
+        self.declare_parameter('CameraToBaseLinkTF.translation_y', 0.0)
+        self.declare_parameter('CameraToBaseLinkTF.translation_z', 1.0)
+        self.declare_parameter('CameraToBaseLinkTF.rotation_x', 0.0)
+        self.declare_parameter('CameraToBaseLinkTF.rotation_y', 0.0)
+        self.declare_parameter('CameraToBaseLinkTF.rotation_z', 0.0)
+        self.declare_parameter('CameraToBaseLinkTF.rotation_w', 0.0)
+        self._translation_x = self.get_parameter('CameraToBaseLinkTF.translation_x').get_parameter_value().double_value
+        self._translation_y = self.get_parameter('CameraToBaseLinkTF.translation_y').get_parameter_value().double_value
+        self._translation_z = self.get_parameter('CameraToBaseLinkTF.translation_z').get_parameter_value().double_value
+        self._rotation_x = self.get_parameter('CameraToBaseLinkTF.rotation_x').get_parameter_value().double_value
+        self._rotation_y = self.get_parameter('CameraToBaseLinkTF.rotation_y').get_parameter_value().double_value
+        self._rotation_z = self.get_parameter('CameraToBaseLinkTF.rotation_z').get_parameter_value().double_value
+        self._rotation_w = self.get_parameter('CameraToBaseLinkTF.rotation_w').get_parameter_value().double_value
+
         # CREAMOS LA TRANSFORMADA (camera_link -> base_link) PARA ENVIAR LA POSE RESPECTO A BASE_LINK
 
         self.t = TransformStamped()
@@ -86,11 +95,11 @@ class HumanDepthProcessorClass(Node):
         self.t.header.frame_id = 'base_link'
         self.t.child_frame_id = 'camera_link'
 
-        self.t.transform.translation.x = float(0.15)
-        self.t.transform.translation.y = float(0.0)
-        self.t.transform.translation.z = float(1.0)
+        self.t.transform.translation.x = self._translation_x
+        self.t.transform.translation.y = self._translation_y
+        self.t.transform.translation.z = self._translation_z
         quat = quaternion_from_euler(
-            float(0.0), float(0.0), float(0.0))
+            self._rotation_x, self._rotation_y, self._rotation_z)
         self.t.transform.rotation.x = quat[0]
         self.t.transform.rotation.y = quat[1]
         self.t.transform.rotation.z = quat[2]
@@ -116,8 +125,8 @@ class HumanDepthProcessorClass(Node):
 
         self._bridge = CvBridge()
 
-        r = self.create_rate(500) 
-        #self._k = 0
+        r = self.create_rate(500)
+
         while (rclpy.ok()):
             r.sleep()
 
@@ -177,8 +186,6 @@ class HumanDepthProcessorClass(Node):
 
         self._cloud = cloud
         self.get_logger().info('CALLBACK_CLOUD')
-        # pos_msg = PoseArray()
-        # self._pub_poses.publish(pos_msg)
 
                         
 def main(args=None):

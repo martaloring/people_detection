@@ -7,16 +7,12 @@ from sensor_msgs.msg import Image, PointCloud2
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import sys
-##from std_msgs.msg import Int16
-import numpy as np
 from openpose_interfaces.msg import *
 sys.path.append('/home/mapir/ros2_ws/src/openpose_pkg/openpose_pkg')
 from proc_image import *
 #import rosbag
 from rclpy.exceptions import ROSInterruptException
 
-import time
-import rospkg #for the ros pkg path
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 import threading
 
@@ -49,7 +45,6 @@ class HumanProcessorClass(Node):
         self._frame_cv = None
         self._width_img = 100.0
         self._height_img = 100.0
-        ## self._bag = rosbag.Bag('human_proc_image.bag', 'w')
 
         qos_profile = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1)
 
@@ -76,18 +71,15 @@ class HumanProcessorClass(Node):
 
         r = self.create_rate(500) 
 
-        while (rclpy.ok()):          # ANTES PONIA while(not rospy.is_shutdown())
+        while (rclpy.ok()):
             r.sleep()
-        ## self._bag.close()
 
-        rclpy.shutdown("Exiting openpose publisher node.\n")             # ANTES PONIA rospy.signal_shutdown("Exiting openpose publisher node.\n")
+        rclpy.shutdown("Exiting openpose publisher node.\n")
         sys.exit(1)
     
 
     def callback_humans(self, human_array):
         self._header_img = human_array.header 
-        ##first the image
-
         image_depth = human_array.image_human
 
         try:
