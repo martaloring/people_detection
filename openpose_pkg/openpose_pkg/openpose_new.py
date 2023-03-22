@@ -3,22 +3,15 @@
 import rclpy
 from rclpy.node import Node
 from cv_bridge import CvBridge, CvBridgeError
-from sensor_msgs.msg import Image
-from std_msgs.msg import Int16
 from openpose_interfaces.msg import *
 from openpose_interfaces.srv import *
 
-#import os
-import time
 import numpy as np
 import sys
-#import rospkg #for the ros pkg path
 ### Load model ###
 sys.path.append('/home/mapirs/ros2_openpose/src/openpose_pkg/openpose_pkg')
 from estimator2 import TfPoseEstimator
-#opencv to copy the image
 import cv2
-#import rosbag
 from rclpy.exceptions import ROSInterruptException
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 import threading
@@ -37,12 +30,11 @@ class OpenposeClass(Node):
         self._tf_start = False
         self._low_frec = True
         self._off_frec = False
-        self._vel_window = [0.0, 0.0] ## LATER 
-        self._window_param = [0.0, 0.0, 100.0, 100.0] ## LATER
+        self._vel_window = [0.0, 0.0]
+        self._window_param = [0.0, 0.0, 100.0, 100.0]
         self._compute_depth = False
         self._move_robot = False
-
-        #rospack = rospkg.RosPack()      
+   
         self._models_path = '/home/mapirs/ros2_openpose/src/openpose_pkg/models/graph_opt.pb'
 
         #for opencv
@@ -70,7 +62,6 @@ class OpenposeClass(Node):
 
         self._topic_image_name =  self.get_parameter('ROSTopics.image_topic').get_parameter_value().string_value
         self._topic_humans_name = self.get_parameter('ROSTopics.humans_topic').get_parameter_value().string_value
-        self._no_human_srv = self.get_parameter('ROSServices.no_human_srv').get_parameter_value().string_value
 
         ## cam topic
         self._sub_cam = self.create_subscription(ImageDepthHuman, self._topic_image_name, self.callback_image, QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1))
@@ -80,8 +71,6 @@ class OpenposeClass(Node):
         self._openpose = TfPoseEstimator(self._models_path)
 
         self._k = 0
-        ###self._bag = rosbag.Bag('humans_openpose.bag', 'w')
-        ###self._bag_time = rosbag.Bag('times_humans_openpose.bag', 'w')
 
         #####################
         ### DEBUG INFO    ###
@@ -90,10 +79,8 @@ class OpenposeClass(Node):
             self.get_logger().info('Debug info activated')
             print('Single detection: %d' % (self._single_human))
             print('Threshold for the detection: %d' % (self._threshold_human))
-            #print('Dimensions of the image: %d - %d' % (self._width_img, self._height_img))
             print('Topic name for the image: %s' % (self._topic_image_name))
             print('Topic name for the humans: %s' % (self._topic_humans_name))
-            ## rospy.loginfo('Topic name for the humans frame: %s', self._topic_human_frame_name)
 
 
     def vel_human(self, current_center, prev_center):
@@ -101,9 +88,6 @@ class OpenposeClass(Node):
         vel[0] = current_center[0] - prev_center[0]
         vel[1] = current_center[1] - prev_center[1]
         return vel
-
-        ## no use
-
 
     def update_window(self, w_frame, h_frame, initial_window, center, vel):
         new_window = initial_window
@@ -116,7 +100,6 @@ class OpenposeClass(Node):
         new_window[0] = int(new_center[0] - new_window[1] / 2.0)
         new_window[2] = int(new_center[1] - new_window[3] / 2.0)
       
-
         for i in range (4):
             if new_window[i] < 0:
                 new_window[i] = 0
@@ -164,14 +147,11 @@ class OpenposeClass(Node):
         self._vel_window = [1.0, 0.0]
 
         if len(humans) == 0:
-            ##move robot until find humans
+
             self._k += 1
             if self._k > 20:
                 self._k = 0
-                # try:
-                #     resp = self._srv_no_human([1.0, 0.0])                     # el try ... comentado por mi
-                # except rospy.ServiceException as e:
-                #     pass
+
 
         elif len(humans) >= n_humans:
             for k in range(n_humans):
@@ -182,10 +162,6 @@ class OpenposeClass(Node):
             if len(humanArray_msg.humans) == 0:
                 self._k += 1
                 if self._k > 20:
-                    # try:                                                      # el try ... comentado por mi
-                    #     resp = self._srv_no_human([1.0, 0.0])
-                    # except rospy.ServiceException as e:
-                    #     pass
                     self._k = 0
 
                 
@@ -195,19 +171,13 @@ class OpenposeClass(Node):
     def single_human_msg(self, human):
         human_msg = Human()
         part_scores = []
-        ### x_values = []
-        ### y_values = []
         for body_part in human.body_parts.values():
             bodyPart_msg = BodyPart()
             bodyPart_msg.idx = body_part.part_idx
             bodyPart_msg.x_percent = body_part.x
             bodyPart_msg.y_percent = body_part.y
             bodyPart_msg.score = body_part.score
-            ##if self._single_human and not self._low_frec:
-            ##    pass ## LATER
             part_scores.append(body_part.score)
-            ### x_values.append(body_part.x)
-            ### y_values.append(body_part.y)
 
             human_msg.parts.append(bodyPart_msg)
             ## if speech, here !!!!! do sth to change x,y to the whole
@@ -223,12 +193,6 @@ class OpenposeClass(Node):
 
 
     def detect_humans(self):
-
-        ## self._pub_image = rospy.Publisher(self._topic_human_frame_name, Image, queue_size=1)
-        ## create the estimator
-        #self._srv_no_human = rclpy.ServiceProxy(self._no_human_srv, NoHuman) # el create service es cuando voy adefinirlo con callback
-
-        ##self._frame_cv = self._bridge.imgmsg_to_cv2(self._frame_ros.image_2d, "bgr8")
         ## this rate in unreal, we cannot achieve it!!
         r = self.create_rate(500) #500 Hz
         self._prev_user = [0.0, 0.0]
@@ -236,21 +200,20 @@ class OpenposeClass(Node):
         thread = threading.Thread(target = rclpy.spin,args = (self,), daemon=True)
         thread.start()
 
-        self.get_logger().info('ESTOY EN DETECT_HUMANS')
+        if (self._debug):
+            self.get_logger().info('Detecting humans')
 
-        while (rclpy.ok()):          # ANTES PONIA while(not rospy.is_shutdown())    
-            #self.get_logger().info('BEFORE SLEEP')
+        while (rclpy.ok()):   
             r.sleep()
-            #self.get_logger().info('AFTER SLEEP')
 
-        ###self._bag.close()
-        rclpy.shutdown("Exiting openpose node.\n")              # ANTES PONIA rospy.signal_shutdown("Exiting openpose node.\n")
+        if (self._debug):
+            rclpy.shutdown("Exiting openpose node.\n")
         sys.exit(1)
 
 
     def callback_image(self, frame_ros):
-    	
-        self.get_logger().info('ESTOY EN CALLBACK_IMAGE')
+    	if (self._debug):
+            self.get_logger().info('Image processing')
         
         try:
             self._header_ros = frame_ros.image_2d.header
@@ -271,15 +234,10 @@ class OpenposeClass(Node):
         ## where are the humans ?!?!
         
         humans, times = self._openpose.inference(self._frame_humans)
-        ##self._bag_time.write('times_inference', times[0])
-
-        #if self._debug:
-        #    self.get_logger().info("Inference times: %d - %d - %d ", times[0], times[1], times[2])
 
         ## convert to ros msg
         humanArray_msg = self.humans_to_msg(humans, self._frame_humans, self._cloud)
         
-       
         ## publish human array
         self._pub_human.publish(humanArray_msg)
 
