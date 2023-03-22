@@ -212,10 +212,7 @@ class OpenposeClass(Node):
 
 
     def callback_image(self, frame_ros):
-    	if (self._debug):
-            self.get_logger().info('Image processing...')
-
-        try:
+    	try:
             self._header_ros = frame_ros.image_2d.header
             self._frame_cv = self._bridge.imgmsg_to_cv2(frame_ros.image_2d, "bgr8")
             self._cloud = frame_ros.point_cloud_3d
@@ -226,6 +223,9 @@ class OpenposeClass(Node):
             self._img_ready = False
         except CvBridgeError as e:
             pass
+
+        if (self._debug):
+            self.get_logger().info('Image processing...')
         
         
     def publish_human_pose(self):
