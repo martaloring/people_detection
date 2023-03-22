@@ -213,8 +213,8 @@ class OpenposeClass(Node):
 
     def callback_image(self, frame_ros):
     	if (self._debug):
-            self.get_logger().info('Image processing')
-        
+            self.get_logger().info('Image processing...')
+
         try:
             self._header_ros = frame_ros.image_2d.header
             self._frame_cv = self._bridge.imgmsg_to_cv2(frame_ros.image_2d, "bgr8")
