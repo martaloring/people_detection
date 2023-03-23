@@ -39,29 +39,32 @@ class HumanDepthProcessorClass(Node):
 
         ## topics names
         self.declare_parameter('ROSTopics.humans_3d_topic', '/users') ##sub
+        self.declare_parameter('ROSTopics.cloud_topic', '/cloud_topic') ##sub
         self.declare_parameter('ROSTopics.users_3d_topic', '/users3D') ##pub
-        self.declare_parameter('ROSTopics.marker_users_topic', '/markers_users') # array de markers en el espacio, cada uno marca una pose
-        self.declare_parameter('ROSServices.no_human_srv', '/human')
-        self.declare_parameter('ROSTopics.markers_3d_body_parts_topic', '/markers_body') # array de markers en el espacio, indicando las partes del humano en el espacio (lineas y esferas)
+        self.declare_parameter('ROSTopics.poses_topic', '/poses_topic') ##pub       
+        #self.declare_parameter('ROSTopics.marker_users_topic', '/markers_users') # array de markers en el espacio, cada uno marca una pose
+        #self.declare_parameter('ROSServices.no_human_srv', '/human')
+        #self.declare_parameter('ROSTopics.markers_3d_body_parts_topic', '/markers_body') # array de markers en el espacio, indicando las partes del humano en el espacio (lineas y esferas)
 
         self._topic_human_3d_name = self.get_parameter('ROSTopics.humans_3d_topic').get_parameter_value().string_value ##sub
+        self._topic_cloud = self.get_parameter('ROSTopics.cloud_topic').get_parameter_value().string_value ##sub
         self._topic_users_3d = self.get_parameter('ROSTopics.users_3d_topic').get_parameter_value().string_value ##pub
-        self._topic_marker = self.get_parameter('ROSTopics.marker_users_topic').get_parameter_value().string_value
-        self._no_human_srv = self.get_parameter('ROSServices.no_human_srv').get_parameter_value().string_value
-        self._topic_body_3d_markers = self.get_parameter('ROSTopics.markers_3d_body_parts_topic').get_parameter_value().string_value
+        self._topic_poses = self.get_parameter('ROSTopics.poses_topic').get_parameter_value().string_value ##pub
+        #self._topic_marker = self.get_parameter('ROSTopics.marker_users_topic').get_parameter_value().string_value
+        #self._no_human_srv = self.get_parameter('ROSServices.no_human_srv').get_parameter_value().string_value
+        #self._topic_body_3d_markers = self.get_parameter('ROSTopics.markers_3d_body_parts_topic').get_parameter_value().string_value
 
         #publishers and subscribers
         qos_profile = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1)
+        qos_profile2 = QoSProfile(reliability=ReliabilityPolicy.RELIABLE, history=HistoryPolicy.KEEP_LAST, depth=1)
 
         self._sub_humans = self.create_subscription(UserRGBDArray, self._topic_human_3d_name, self.callback_users, qos_profile) ## users from proc. image node. # array de UserRGBD (para cada usuario: nombre, coord. cara en img, pose, body parts...)
-        self._sub_cloud = self.create_subscription(PointCloud2, '/cloud_topic', self.callback_cloud, qos_profile) 
+        self._sub_cloud = self.create_subscription(PointCloud2, self._topic_cloud, self.callback_cloud, qos_profile) 
 
         self._pub_user = self.create_publisher(User3DArray, self._topic_users_3d, qos_profile) ## array de User3D (para cada usuario: nombre, pose, body parts, altura...)
-        self._pub_marker = self.create_publisher(MarkerArray, self._topic_marker, qos_profile) 
-        self._pub_markers_body = self.create_publisher(MarkerArray, self._topic_body_3d_markers, qos_profile) ##img with drawn human
-
-        qos_profile2 = QoSProfile(reliability=ReliabilityPolicy.RELIABLE, history=HistoryPolicy.KEEP_LAST, depth=1)
-        self._pub_poses= self.create_publisher(PoseArray, '/poses_topic', qos_profile2) ##img with drawn human
+        self._pub_poses= self.create_publisher(PoseArray, self._topic_poses, qos_profile2) ##final poses
+        #self._pub_marker = self.create_publisher(MarkerArray, self._topic_marker, qos_profile) 
+        #self._pub_markers_body = self.create_publisher(MarkerArray, self._topic_body_3d_markers, qos_profile) ##img with drawn human
 
 
         self._header_users = None
@@ -74,17 +77,20 @@ class HumanDepthProcessorClass(Node):
         self.declare_parameter('CameraToBaseLinkTF.translation_x', 0.15)
         self.declare_parameter('CameraToBaseLinkTF.translation_y', 0.0)
         self.declare_parameter('CameraToBaseLinkTF.translation_z', 1.0)
-        self.declare_parameter('CameraToBaseLinkTF.rotation_x', 0.0)
-        self.declare_parameter('CameraToBaseLinkTF.rotation_y', 0.0)
-        self.declare_parameter('CameraToBaseLinkTF.rotation_z', 0.0)
-        self.declare_parameter('CameraToBaseLinkTF.rotation_w', 0.0)
+        self.declare_parameter('CameraToBaseLinkTF.angle_x', 0.0)
+        self.declare_parameter('CameraToBaseLinkTF.angle_y', 0.0)
+        self.declare_parameter('CameraToBaseLinkTF.angle_z', 0.0)
         self._translation_x = self.get_parameter('CameraToBaseLinkTF.translation_x').get_parameter_value().double_value
         self._translation_y = self.get_parameter('CameraToBaseLinkTF.translation_y').get_parameter_value().double_value
         self._translation_z = self.get_parameter('CameraToBaseLinkTF.translation_z').get_parameter_value().double_value
-        self._rotation_x = self.get_parameter('CameraToBaseLinkTF.rotation_x').get_parameter_value().double_value
-        self._rotation_y = self.get_parameter('CameraToBaseLinkTF.rotation_y').get_parameter_value().double_value
-        self._rotation_z = self.get_parameter('CameraToBaseLinkTF.rotation_z').get_parameter_value().double_value
-        self._rotation_w = self.get_parameter('CameraToBaseLinkTF.rotation_w').get_parameter_value().double_value
+        self._rotation_x = self.get_parameter('CameraToBaseLinkTF.angle_x').get_parameter_value().double_value
+        self._rotation_y = self.get_parameter('CameraToBaseLinkTF.angle_y').get_parameter_value().double_value
+        self._rotation_z = self.get_parameter('CameraToBaseLinkTF.angle_z').get_parameter_value().double_value
+
+        self.declare_parameter('CameraToBaseLinkTF.general_camera_frame', 'camera_link')
+        self._general_camera_frame = self.get_parameter('CameraToBaseLinkTF.general_camera_frame').get_parameter_value().string_value
+        self.declare_parameter('CameraToBaseLinkTF.depth_cloud_frame', 'camera_color_optical_frame')
+        self._depth_cloud_frame = self.get_parameter('CameraToBaseLinkTF.depth_cloud_frame').get_parameter_value().string_value
 
         # CREAMOS LA TRANSFORMADA (camera_link -> base_link) PARA ENVIAR LA POSE RESPECTO A BASE_LINK
 
@@ -93,7 +99,7 @@ class HumanDepthProcessorClass(Node):
 
         self.t.header.stamp = self.get_clock().now().to_msg()
         self.t.header.frame_id = 'base_link'
-        self.t.child_frame_id = 'camera_link'
+        self.t.child_frame_id = self._general_camera_frame
 
         self.t.transform.translation.x = self._translation_x
         self.t.transform.translation.y = self._translation_y
@@ -137,7 +143,8 @@ class HumanDepthProcessorClass(Node):
 
     def callback_users(self, user_array):
 
-        self.get_logger().info('CALLBACK_USERS')
+        if (self._debug):
+            self.get_logger().info('CALLBACK_USERS')
 
         user_array.cloud = self._cloud
         user_array.compute_depth = 1
@@ -152,21 +159,23 @@ class HumanDepthProcessorClass(Node):
             ###print userarray_msg
 
             if cloud_correct:
-                self.get_logger().info('cloud correct')
-                print('number of users: %d' % (len(userarray_msg.users)))
+                if (self._debug):
+                    self.get_logger().info('cloud correct')
+                    print('number of users: %d' % (len(userarray_msg.users)))
 
                 if len(userarray_msg.users) > 0:
-                    self._pub_user.publish(userarray_msg)
-                    self._pub_marker.publish(userarrarmarker_msg)
-                    self.get_logger().info('publishing users3D')
+                    #self._pub_user.publish(userarray_msg)
+                    #self._pub_marker.publish(userarrarmarker_msg)
+                    # if (self._debug):
+                    #     self.get_logger().info('publishing users3D')
 
-                    if self._create_body_3d:
-                        self._pub_markers_body.publish(markers_body)
+                    # if self._create_body_3d:
+                    #     self._pub_markers_body.publish(markers_body)
                     
                     # TRANSFORMAMOS LAS POSES Y LAS PUBLICAMOS
                     camera_to_map = self.tf_buffer.lookup_transform(
                         'map',
-                        'camera_color_optical_frame',
+                        self._depth_cloud_frame,
                         rclpy.time.Time())
                     
                     pos_msg = PoseArray()
@@ -185,7 +194,8 @@ class HumanDepthProcessorClass(Node):
     def callback_cloud(self, cloud):
 
         self._cloud = cloud
-        self.get_logger().info('CALLBACK_CLOUD')
+        if (self._debug):
+            self.get_logger().info('CALLBACK_CLOUD')
 
                         
 def main(args=None):

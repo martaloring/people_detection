@@ -29,7 +29,7 @@ class HumanProcessorClass(Node):
 
         ## topics names
         self.declare_parameter('ROSTopics.humans_topic', '/humans') ##sub
-        self.declare_parameter('ROSTopics.video_humans_drawn_topic', '/frame_humans') ##pub
+        self.declare_parameter('ROSTopics.video_humans_drawn_topic', '/openpose/frame_humans/draw_img') ##pub
         self.declare_parameter('ROSTopics.humans_3d_topic', '/users') ##pub
 
         self._topic_humans_name = self.get_parameter('ROSTopics.humans_topic').get_parameter_value().string_value

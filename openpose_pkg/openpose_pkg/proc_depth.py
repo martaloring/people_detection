@@ -513,8 +513,8 @@ class HumanDepthSet():
             cont = 0
             for human in (self._humans_array):
                 cont = cont + 1
-                print('persona nº:')
-                print(cont)
+                #print('persona nº:')
+                #print(cont)
                 user_msg = User3D()
                 marker_msg = Marker()
                 marker_arrow_msg = Marker() 

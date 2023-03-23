@@ -46,7 +46,7 @@ class camera_usb(Node):
         self._frec_high = self.get_parameter('FrecInference.high_frec').get_parameter_value().integer_value
 
         ## services names
-        self.declare_parameter('ROSServices.change_frec_srv', '/change_frec')
+        self.declare_parameter('ROSServices.change_frec_srv', '/openpose/change_frec')
         self.declare_parameter('ROSServices.start_detection_srv', '/openpose/start_detection_humans_service')
         self._srv_change_name = self.get_parameter('ROSServices.change_frec_srv').get_parameter_value().string_value
         self._srv_start_name = self.get_parameter('ROSServices.start_detection_srv').get_parameter_value().string_value
@@ -54,10 +54,12 @@ class camera_usb(Node):
 
         ## topics names
 
-        self.declare_parameter('ROSTopics.image_topic', 'openpose/usb_cam/image_dim_CODE') ##pub -- esto es lo que le pasa al siguente nodo (openpose_new)
+        self.declare_parameter('ROSTopics.image_topic', 'openpose/usb_cam/image_dim') ##pub -- esto es lo que le pasa al siguente nodo (openpose_new)
+        self.declare_parameter('ROSTopics.cloud_topic', '/cloud_topic') ##pub -- esto es lo que le pasa a proc_depth_node
         self.declare_parameter('ROSTopics.depth_cloud_topic', '/camera/depth/points') ##sub -- depth cloud
         self.declare_parameter('ROSTopics.rgb_cam_topic', '/camera/color/image_raw') ##sub -- aqui tenemos que publicar desde la camara
         self._topic_image =  self.get_parameter('ROSTopics.image_topic').get_parameter_value().string_value
+        self._topic_cloud_pub =  self.get_parameter('ROSTopics.cloud_topic').get_parameter_value().string_value
         self._topic_point_cloud_name = self.get_parameter('ROSTopics.depth_cloud_topic').get_parameter_value().string_value
         self._topic_rgb_image = self.get_parameter('ROSTopics.rgb_cam_topic').get_parameter_value().string_value
 
@@ -120,7 +122,7 @@ class camera_usb(Node):
         self._sub_cam_rgb = self.create_subscription(Image, self._topic_rgb_image, self.callback_image_rgb, qos_profile) ## rgb-d cam
 
         self._pub_img = self.create_publisher(ImageDepthHuman, self._topic_image, 1)
-        self._pub_cloud = self.create_publisher(PointCloud2, '/cloud_topic', qos_profile)
+        self._pub_cloud = self.create_publisher(PointCloud2, self._topic_cloud_pub, qos_profile)
 
         self._r = self.create_rate(self._frec_off) # so we start with the off frecuency, 
 
@@ -133,27 +135,32 @@ class camera_usb(Node):
         ## compute depth
         if req.compute_depth == 'on':
             self._detection_active = True
-            self.get_logger().info('DETECTION ON')
+            if self._debug:
+                self.get_logger().info('DETECTION ON')
         else:
             self._detection_active = False
-            self.get_logger().info('DETECTION OFF')
+            if self._debug:
+                self.get_logger().info('DETECTION OFF')
 
             
         if req.initial_frec == 'low':
-            self.get_logger().info('Lowfrec')
             self._r = self.create_rate(self._frec_low)
             self._mode_off = False
+            if self._debug:
+                self.get_logger().info('Low frec')
 
         elif req.initial_frec == 'off':
             self._detection_active = False
-            self.get_logger().info('Offfrec')
             self._r = self.create_rate(self._frec_off)
             self._mode_off = True
+            if self._debug:
+                self.get_logger().info('Off frec')
 
         else:
-            self.get_logger().info('Highfrec')
             self._r = self.create_rate(self._frec_high)
             self._mode_off = False
+            if self._debug:
+                self.get_logger().info('High frec')
         
         return res
 
@@ -161,19 +168,21 @@ class camera_usb(Node):
         if req.change_frec_to == 'off':
             self._r = self.create_rate(self._frec_off)
             self._mode_off = True
-
             self._detection_active = False
-            self.get_logger().info('Frecuencia OFF')
+            if self._debug:
+                self.get_logger().info('Frecuencia OFF')
             
         elif req.change_frec_to == 'low':
             self._mode_off = False
             self._r = self.create_rate(self._frec_low)
-            self.get_logger().info('Frecuencia puesta a LOW')
+            if self._debug:
+                self.get_logger().info('Frecuencia puesta a LOW')
             
         elif req.change_frec_to == 'high':
             self._mode_off = False
             self._r = self.create_rate(self._frec_high)
-            self.get_logger().info('Frecuencia puesta a HIGH')
+            if self._debug:
+                self.get_logger().info('Frecuencia puesta a HIGH')
             
         return res
     
@@ -183,8 +192,7 @@ class camera_usb(Node):
         self._time_cloud = time.time()
 
     def callback_image(self, frame_cam):
-
-        print("nada") 
+        print("this won't be executed")
 
     def callback_image_rgb(self, frame_cam):
         try:

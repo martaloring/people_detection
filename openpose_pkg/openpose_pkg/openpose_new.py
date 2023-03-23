@@ -56,9 +56,8 @@ class OpenposeClass(Node):
         self._threshold_human = self.get_parameter('HumanDetected.threshold_human').get_parameter_value().double_value
 
         ## topics names
-        self.declare_parameter('ROSTopics.image_topic', 'openpose/usb_cam/image_dim_YAML')
+        self.declare_parameter('ROSTopics.image_topic', 'openpose/usb_cam/image_dim')
         self.declare_parameter('ROSTopics.humans_topic', 'openpose/humans')
-        self.declare_parameter('ROSServices.no_human_srv', '/human')
 
         self._topic_image_name =  self.get_parameter('ROSTopics.image_topic').get_parameter_value().string_value
         self._topic_humans_name = self.get_parameter('ROSTopics.humans_topic').get_parameter_value().string_value
